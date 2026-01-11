@@ -36,14 +36,18 @@ export default function LoginForm() {
 
   async function onSubmit(values: LoginSchema) {
     try {
+      console.log('LoginForm: Starting login...');
       await login(values.identifier, values.password);
-      router.replace(redirectTo);
-      router.refresh();
+      
+      console.log('LoginForm: Login successful, redirecting immediately...');
+      
+      // Immediate redirect without delay for better UX
+      router.replace('/dashboard');
+      
     } catch (err: any) {
-      // Error toasts are now handled automatically by the API interceptor
-      // Just set form error for display if needed
-      const message = err?.message || "Invalid credentials. Please try again.";
-      console.error("Login error:", message);
+      // All error handling is done via toasts in the API client
+      // No form errors needed
+      console.error("Login error:", err);
     }
   }
 
@@ -75,7 +79,6 @@ export default function LoginForm() {
                         {...field}
                         onChange={(e) => {
                           field.onChange(e);
-                          form.clearErrors("root");
                         }}
                       />
                     </FormControl>
@@ -108,7 +111,6 @@ export default function LoginForm() {
                         {...field}
                         onChange={(e) => {
                           field.onChange(e);
-                          form.clearErrors("root");
                         }}
                       />
                     </FormControl>
@@ -117,15 +119,15 @@ export default function LoginForm() {
                 )}
               />
 
-              {/* Root error */}
-              {form.formState.errors.root?.message && (
-                <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900/40 dark:bg-red-950/40 dark:text-red-200">
-                  {form.formState.errors.root.message}
-                </div>
-              )}
-
               <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "Signing in..." : "Sign in"}
+                {isLoading ? (
+                  <div className="flex items-center space-x-2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    <span>Signing in...</span>
+                  </div>
+                ) : (
+                  "Sign in"
+                )}
               </Button>
 
               <Separator />

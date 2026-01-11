@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { toApiError, type ApiError } from "@/api/apiHandler";
+import { type ApiError, getApiErrorMessage } from "@/api";
 
 export function useApiMutation<TVars, TData>(
   fn: (vars: TVars) => Promise<TData>
@@ -18,7 +18,7 @@ export function useApiMutation<TVars, TData>(
       setData(res);
       return res;
     } catch (e) {
-      const err = toApiError(e);
+      const err: ApiError = { message: getApiErrorMessage(e) };
       setError(err);
       throw err;
     } finally {

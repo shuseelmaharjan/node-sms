@@ -5,7 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { useAuthStore } from "./store";
 
 // Routes that don't require authentication
-const PUBLIC_ROUTES = ["/login", "/register", "/forgot-password"];
+const PUBLIC_ROUTES = ["/login"];
 
 export function useAuthGuard() {
   const { accessToken, user, hydrated } = useAuthStore();

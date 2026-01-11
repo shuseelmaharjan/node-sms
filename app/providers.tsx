@@ -1,11 +1,14 @@
 "use client";
 
 import { AuthProvider } from "@/components/auth/AuthProvider";
+import { ConfirmationModalProvider } from "@/components/ui/confirmation-modal";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <AuthProvider>
-      {children}
+      <ConfirmationModalProvider>
+        {children}
+      </ConfirmationModalProvider>
     </AuthProvider>
   );
 }

@@ -4,13 +4,14 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useMutation } from "@tanstack/react-query";
 import type { FieldError } from "react-hook-form";
-import { api } from "@/lib/http/client";
+import axios from "axios";
+import { api } from "@/api";
 import { Loader2, X, Image as ImageIcon, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 type UploadResponse = {
   id: string;
-  file: string; // URL from backend/media
+  file: string;
   file_type: string;
   original_name: string;
   size_bytes: number;
@@ -22,29 +23,35 @@ type UploadResponse = {
 type Props = {
   title?: string;
   hint?: string;
-
-  /** existing image URL for edit mode preview */
   initialUri?: string | null;
 
-  /** RHF value: uploaded file UUID */
   value?: string | null;
   onChange: (id: string | null) => void;
 
-  /** "image" by default (maps to serializer's file_type field) */
   fileType?: string;
-
-  /** If true uses temp-upload, else permanent upload */
-  temporary?: boolean;
-
-  /** Optional metadata; will be JSON-stringified */
-  meta?: Record<string, any> | null;
 
   error?: FieldError;
   onUploadStatusChange?: (uploading: boolean) => void;
 
-  /** Optional: call backend delete on remove */
   deleteOnRemove?: boolean;
 };
+
+function extractDrfError(data: any): string | null {
+  if (!data) return null;
+  if (typeof data === "string") return data;
+  if (data.detail) return String(data.detail);
+  if (data.message) return String(data.message);
+  if (Array.isArray(data.non_field_errors) && data.non_field_errors.length) {
+    return String(data.non_field_errors[0]);
+  }
+  if (typeof data === "object") {
+    for (const [k, v] of Object.entries(data)) {
+      if (Array.isArray(v) && v.length) return `${k}: ${v[0]}`;
+      if (typeof v === "string") return `${k}: ${v}`;
+    }
+  }
+  return null;
+}
 
 export function ImagePickerField({
   title = "Image",
@@ -53,49 +60,73 @@ export function ImagePickerField({
   value,
   onChange,
   fileType = "image",
-  temporary = true,
-  meta = null,
   error,
   onUploadStatusChange,
   deleteOnRemove = false,
 }: Props) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(initialUri);
   const inputRef = useRef<HTMLInputElement>(null);
+  const objectUrlRef = useRef<string | null>(null);
 
-  // keep preview in sync when switching records
   useEffect(() => {
     setPreviewUrl(initialUri ?? null);
+    if (objectUrlRef.current) {
+      URL.revokeObjectURL(objectUrlRef.current);
+      objectUrlRef.current = null;
+    }
   }, [initialUri]);
 
-  const uploadUrl = temporary
-    ? "/api/v1/files/temp-upload/"
-    : "/api/v1/files/upload/";
+  const uploadUrl = "/api/v1/files/upload/";
 
   const uploadMutation = useMutation({
     mutationFn: async (formData: FormData) => {
-      // IMPORTANT: do NOT set Content-Type manually (axios sets boundary)
+      // Debug to confirm FormData has the file
+      console.log("UPLOAD FormData entries:");
+      for (const [k, v] of formData.entries()) {
+        if (v instanceof File) {
+          console.log(`- ${k}: File(${v.name}, ${v.type}, ${v.size} bytes)`);
+        } else {
+          console.log(`- ${k}:`, v);
+        }
+      }
+
+      // ✅ no headers here. interceptor will handle FormData correctly.
       const res = await api.post<UploadResponse>(uploadUrl, formData);
       return res.data;
     },
+
     onSuccess: (data) => {
       onChange(data.id);
       setPreviewUrl(data.file);
+
+      if (objectUrlRef.current) {
+        URL.revokeObjectURL(objectUrlRef.current);
+        objectUrlRef.current = null;
+      }
+
       toast.success("Image uploaded successfully");
     },
-    onError: (err: any) => {
-      console.error("UPLOAD ERROR:", err?.response?.data);
-      const detail =
-        err?.response?.data?.detail ||
-        err?.response?.data?.message ||
-        // DRF field errors like { file: ["..."] }
-        (typeof err?.response?.data === "object"
-          ? JSON.stringify(err.response.data)
-          : null) ||
-        err?.message ||
-        "Upload failed";
 
-      toast.error("Image upload failed - " + detail);
+    onError: (err: unknown) => {
+      if (axios.isAxiosError(err)) {
+        console.error("UPLOAD ERROR status:", err.response?.status);
+        console.error("UPLOAD ERROR data:", err.response?.data);
+        console.error("UPLOAD REQUEST headers:", err.config?.headers);
+      } else {
+        console.error("UPLOAD ERROR:", err);
+      }
+
+      const msg = axios.isAxiosError(err)
+        ? extractDrfError(err.response?.data) || err.message
+        : "Upload failed";
+
+      toast.error(msg);
       setPreviewUrl(initialUri ?? null);
+
+      if (objectUrlRef.current) {
+        URL.revokeObjectURL(objectUrlRef.current);
+        objectUrlRef.current = null;
+      }
     },
   });
 
@@ -104,7 +135,7 @@ export function ImagePickerField({
       await api.delete(`/api/v1/remove-file/${id}/`);
     },
     onError: (err: any) => {
-      console.error("DELETE ERROR:", err?.response?.data);
+      console.error("DELETE ERROR:", err?.response?.data ?? err);
       toast.error("Failed to delete image from server");
     },
   });
@@ -121,35 +152,37 @@ export function ImagePickerField({
       const file = e.target.files?.[0];
       if (!file) return;
 
-      // immediate local preview
       const localUrl = URL.createObjectURL(file);
+      objectUrlRef.current = localUrl;
       setPreviewUrl(localUrl);
 
       const formData = new FormData();
       formData.append("file", file);
       formData.append("file_type", fileType);
 
-      // meta is optional; DRF JSONField often accepts stringified json in multipart
-      if (meta !== null && meta !== undefined) {
-        formData.append("meta", JSON.stringify(meta));
-      }
-
       try {
         await uploadMutation.mutateAsync(formData);
+      } catch {
+        // ✅ avoid "Uncaught (in promise)"
       } finally {
         e.target.value = "";
       }
     },
-    [uploadMutation, fileType, meta]
+    [uploadMutation, fileType]
   );
 
   const handleRemove = useCallback(async () => {
     const id = value ?? null;
 
-    // Optimistic UI
     onChange(null);
     setPreviewUrl(null);
     if (inputRef.current) inputRef.current.value = "";
+
+    if (objectUrlRef.current) {
+      URL.revokeObjectURL(objectUrlRef.current);
+      objectUrlRef.current = null;
+    }
+
     toast.info("Image removed");
 
     if (deleteOnRemove && id) {
@@ -176,12 +209,15 @@ export function ImagePickerField({
         )}
       </div>
 
-      {/* Has image => preview + remove only */}
       {hasImage ? (
         <div className="rounded-xl bg-card">
           <div className="relative overflow-hidden rounded-lg border bg-muted/20">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={previewUrl!} alt="Preview" className="h-56 w-full object-cover" />
+            <img
+              src={previewUrl!}
+              alt="Preview"
+              className="h-56 w-full object-cover"
+            />
 
             {!busy && (
               <button
@@ -205,7 +241,6 @@ export function ImagePickerField({
           </div>
         </div>
       ) : (
-        /* No image => upload area */
         <div className="rounded-xl border bg-card">
           <div
             onClick={openPicker}
@@ -214,9 +249,12 @@ export function ImagePickerField({
             <div className="rounded-full bg-primary/10 p-3">
               <ImageIcon size={32} className="text-primary" />
             </div>
+
             <div className="flex flex-col items-center gap-1">
               <span className="text-sm font-medium">{hint}</span>
-              <span className="text-xs text-muted-foreground">PNG, JPG up to ~5MB</span>
+              <span className="text-xs text-muted-foreground">
+                PNG, JPG up to ~5MB
+              </span>
             </div>
 
             <Button
@@ -224,8 +262,8 @@ export function ImagePickerField({
               variant="outline"
               size="sm"
               disabled={busy}
-              onClick={(e) => {
-                e.stopPropagation();
+              onClick={(ev) => {
+                ev.stopPropagation();
                 openPicker();
               }}
             >
@@ -236,7 +274,11 @@ export function ImagePickerField({
         </div>
       )}
 
-      {error && <p className="mt-1 text-xs font-medium text-destructive">{error.message}</p>}
+      {error && (
+        <p className="mt-1 text-xs font-medium text-destructive">
+          {error.message}
+        </p>
+      )}
 
       <input
         ref={inputRef}

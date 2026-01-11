@@ -1,13 +1,5 @@
 "use client";
 
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -16,12 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Bell, ChevronDown, LogOut } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
+import { DynamicBreadcrumbs } from "@/components/ui/dynamic-breadcrumbs";
 
-export function DashboardHeader({
-  pageTitle = "Institute Management",
-}: {
-  pageTitle?: string;
-}) {
+export function DashboardHeader() {
   const { user, logout } = useAuth();
   const email = user?.email ?? "User";
   const initials = (email?.[0] ?? "U").toUpperCase();
@@ -46,23 +35,7 @@ export function DashboardHeader({
 
           <Separator orientation="vertical" className="mx-2 h-5" />
 
-          <Breadcrumb>
-            <BreadcrumbList className="min-w-0">
-              <BreadcrumbItem className="hidden md:block">
-                <BreadcrumbLink href="/dashboard" className="text-muted-foreground hover:text-foreground">
-                  Dashboard
-                </BreadcrumbLink>
-              </BreadcrumbItem>
-
-              <BreadcrumbSeparator className="hidden md:block" />
-
-              <BreadcrumbItem className="min-w-0">
-                <BreadcrumbPage className="truncate font-semibold text-foreground">
-                  {pageTitle}
-                </BreadcrumbPage>
-              </BreadcrumbItem>
-            </BreadcrumbList>
-          </Breadcrumb>
+          <DynamicBreadcrumbs maxItems={4} className="min-w-0" />
         </div>
 
         {/* Right */}

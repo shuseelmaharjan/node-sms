@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { toApiError, type ApiError } from "@/api/apiHandler";
+import { type ApiError, getApiErrorMessage } from "@/api";
 
 export function useApiQuery<TData>(key: string, fn: () => Promise<TData>) {
   const [data, setData] = useState<TData | null>(null);
@@ -13,7 +13,7 @@ export function useApiQuery<TData>(key: string, fn: () => Promise<TData>) {
     setLoading(true);
     fn()
       .then((d) => alive && setData(d))
-      .catch((e) => alive && setError(toApiError(e)))
+      .catch((e) => alive && setError({ message: getApiErrorMessage(e) }))
       .finally(() => alive && setLoading(false));
     return () => {
       alive = false;
