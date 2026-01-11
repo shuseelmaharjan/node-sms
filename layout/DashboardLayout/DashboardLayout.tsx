@@ -1,31 +1,16 @@
 "use client";
 
-import { AppSidebar } from "./components/AppSidebar";
-import { Suspense, useEffect } from "react";
+import React, { Suspense } from "react";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { useAuth } from "@/lib/auth";
-import { navconfig } from "./components/navigation.config";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
-import { Separator } from "@/components/ui/separator";
-import {
-  SidebarInset,
-  SidebarProvider,
-  SidebarTrigger,
-} from "@/components/ui/sidebar";
+
+import { AppSidebar } from "./components/AppSidebar";
 import { DashboardHeader } from "./components/DashboardHeader";
+import { navconfig } from "./components/navigation.config";
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const { user, isLoading } = useAuth();
-
-  useEffect(() => {
-    // Authentication is handled by the auth provider
-  }, []);
+  const { isLoading } = useAuth();
+  const year = new Date().getFullYear();
 
   if (isLoading) {
     return (
@@ -40,24 +25,30 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
     <SidebarProvider>
       <AppSidebar navItems={navconfig} />
-      <SidebarInset>
+
+      <SidebarInset className="min-h-svh">
         <DashboardHeader pageTitle="Dashboard" />
-        <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-          <Suspense fallback={
-            <div className="flex items-center justify-center p-8">
-              <div className="text-sm text-muted-foreground">Loading…</div>
-            </div>
-          }>
-            {children}
-          </Suspense>
-          
-          <footer className="mt-auto border-t bg-background px-4 py-3">
+
+        <main className="flex flex-1 flex-col">
+          <div className="flex-1 p-4">
+            <Suspense
+              fallback={
+                <div className="grid place-items-center py-10">
+                  <p className="text-sm text-muted-foreground">Loading…</p>
+                </div>
+              }
+            >
+              {children}
+            </Suspense>
+          </div>
+
+          <footer className="border-t bg-background px-4 py-3">
             <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
-              <span>© {new Date().getFullYear()} Institute Management System</span>
+              <span>© {year} Institute Management System</span>
               <span className="opacity-80">Education Platform</span>
             </div>
           </footer>
-        </div>
+        </main>
       </SidebarInset>
     </SidebarProvider>
   );
