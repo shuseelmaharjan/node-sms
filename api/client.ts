@@ -1,5 +1,9 @@
-// lib/http/client.ts
-import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
+// api/client.ts
+import axios, {
+  AxiosError,
+  AxiosHeaders,
+  InternalAxiosRequestConfig,
+} from "axios";
 import { useAuthStore } from "@/lib/auth/store";
 import { toast } from "sonner";
 
@@ -10,21 +14,12 @@ const API_BASE_URL =
 function extractDjangoError(error: any): string {
   const data = error.response?.data;
 
-  if (!data) {
-    return error.message || "Request failed";
-  }
+  if (!data) return error.message || "Request failed";
+  if (typeof data === "string") return data;
 
-  if (data.non_field_errors?.length) {
-    return data.non_field_errors[0];
-  }
-
-  if (data.detail) {
-    return data.detail;
-  }
-
-  if (data.message) {
-    return data.message;
-  }
+  if (data.non_field_errors?.length) return data.non_field_errors[0];
+  if (data.detail) return data.detail;
+  if (data.message) return data.message;
 
   for (const [field, errors] of Object.entries(data)) {
     if (Array.isArray(errors) && errors.length > 0) {
@@ -40,6 +35,9 @@ export const api = axios.create({
   withCredentials: true,
   headers: { "X-Client-Type": "web" },
 });
+
+// ✅ IMPORTANT: make sure we do NOT have a forced JSON content-type on posts
+delete api.defaults.headers.post["Content-Type"];
 
 // Prevent multiple refresh attempts
 let refreshPromise: Promise<string | null> | null = null;
@@ -65,9 +63,7 @@ async function refreshAccessToken(): Promise<string | null> {
         const store = useAuthStore.getState();
         store.setAccessToken(accessToken);
         store.setSessionValid(true);
-
         if (user) store.setUser(user);
-
         return accessToken;
       }
 
@@ -93,34 +89,28 @@ async function refreshAccessToken(): Promise<string | null> {
   return refreshPromise;
 }
 
-// Add auth token + fix multipart uploads
+// ✅ Add auth token + fix multipart uploads (Axios v1-safe)
 api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   const token = useAuthStore.getState().accessToken;
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
 
-  /**
-   * ✅ CRITICAL: Fix FormData uploads
-   * Your logs show Axios sends:
-   * Content-Type: application/x-www-form-urlencoded
-   * which makes DRF treat file as blank.
-   *
-   * For FormData we MUST:
-   * - remove Content-Type
-   * - disable request transforms (avoid urlencoding)
-   * - let browser set multipart boundary
-   */
   const isFormData =
     typeof FormData !== "undefined" && config.data instanceof FormData;
 
   if (isFormData) {
-    // remove any forced content-type (e.g. x-www-form-urlencoded)
-    delete (config.headers as any)["Content-Type"];
-    delete (config.headers as any)["content-type"];
+    // Axios v1: config.headers may be AxiosHeaders
+    if (config.headers instanceof AxiosHeaders) {
+      config.headers.delete("Content-Type");
+      config.headers.delete("content-type");
+    } else {
+      delete (config.headers as any)["Content-Type"];
+      delete (config.headers as any)["content-type"];
+    }
 
-    // ensure axios doesn't serialize FormData
-    (config as any).transformRequest = [(data: any) => data];
+    // ✅ DO NOT set multipart/form-data manually; browser will add boundary
+    // ✅ DO NOT force transformRequest; axios will send FormData correctly now
   }
 
   return config;
@@ -141,7 +131,7 @@ api.interceptors.response.use(
 
     if (
       error.response?.status === 401 &&
-      !originalRequest._retry &&
+      !originalRequest?._retry &&
       !isAuthEndpoint
     ) {
       originalRequest._retry = true;
