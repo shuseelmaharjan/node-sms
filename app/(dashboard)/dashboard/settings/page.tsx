@@ -1,9 +1,5 @@
-import { SchoolSettings } from "@/modules/org";
+import { redirect } from "next/navigation";
 
-export default function SettingsPage() {
-  return (
-    <div className="p-6">
-      <SchoolSettings />
-    </div>
-  );
+export default function SettingsIndexPage() {
+  redirect("/dashboard/settings/schools");
 }

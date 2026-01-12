@@ -213,7 +213,7 @@ export function AppSidebar({ navItems, logoSrc = "/logo.svg" }: AppSidebarProps)
                               "hover:bg-accent/60",
                               // more “pill” active state
                               isParentActive &&
-                                "bg-primary/12 text-primary font-semibold shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.18)]"
+                              "bg-primary/12 text-primary font-semibold shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.18)]"
                             )}
                           >
                             {/* left glow bar */}
@@ -269,7 +269,7 @@ export function AppSidebar({ navItems, logoSrc = "/logo.svg" }: AppSidebarProps)
                         "group relative rounded-xl py-3 transition-all",
                         "hover:bg-accent/60",
                         isActive &&
-                          "bg-primary/12 text-primary font-semibold shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.18)]"
+                        "bg-primary/12 text-primary font-semibold shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.18)]"
                       )}
                     >
                       <Link href={item.href} className="flex items-center gap-2">
@@ -300,30 +300,38 @@ export function AppSidebar({ navItems, logoSrc = "/logo.svg" }: AppSidebarProps)
       </SidebarContent>
 
       {/* Footer */}
+      {/* Footer */}
       <SidebarFooter className="px-2 py-3">
         <div className="mb-2 h-px w-full bg-border/70" />
 
-        <SidebarMenu className="gap-1.5">
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              asChild
-              className={cn(
-                "rounded-xl py-3 transition-colors",
-                "hover:bg-accent/60"
-              )}
-            >
-              <Link href="/help" className="flex items-center justify-between">
-                <span className="truncate text-sm text-muted-foreground">
-                  Help & Support
-                </span>
-                <span className="text-xs text-muted-foreground/80">
-                  F1
-                </span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
+        {(() => {
+          const appName =
+            process.env.NEXT_PUBLIC_APP_NAME || "School Management System";
+          const year = new Date().getFullYear();
+
+          // Collapsed: compact + tooltip via title
+          if (collapsed) {
+            return (
+              <div
+                className="flex items-center justify-center"
+                title={`© ${year} ${appName}`}
+              >
+                <div className="rounded-lg border bg-muted/30 px-2 py-1 text-[11px] font-medium text-muted-foreground">
+                  © {year}
+                </div>
+              </div>
+            );
+          }
+
+          // Expanded: full text, wraps when needed
+          return (
+            <p className="px-1 text-xs text-muted-foreground leading-relaxed whitespace-normal break-words [overflow-wrap:anywhere]">
+              © {year} {appName}
+            </p>
+          );
+        })()}
       </SidebarFooter>
+
     </Sidebar>
   );
 }

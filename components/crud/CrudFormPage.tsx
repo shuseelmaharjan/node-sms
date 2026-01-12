@@ -4,7 +4,7 @@ import React, { useMemo, useState } from "react";
 import { z } from "zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { FormWizard, StepDef } from "@/components/form/FormWizard";
+import { FormWizard } from "@/components/form/FormWizard";
 import { ConfirmDeleteDialog } from "@/components/crud/ConfirmDeleteDialog";
 import type { CrudApi, CrudCache } from "@/components/crud/types";
 
@@ -12,10 +12,13 @@ type CrudFormPageProps<S extends z.ZodObject<any, any>, Entity> = {
   title?: string;
 
   schema: S;
-  steps: StepDef<S>[];
+
+  /**
+   * Render form fields for the page.
+   */
+  renderSections: (methods: any) => React.ReactNode;
 
   id?: string;
-
   createDefaults: z.infer<S>;
 
   api: CrudApi<S, Entity>;
@@ -30,12 +33,14 @@ type CrudFormPageProps<S extends z.ZodObject<any, any>, Entity> = {
   canDelete?: boolean;
   externallyBlocked?: boolean;
   className?: string;
+
+  disableSubmitUntilDirty?: boolean;
 };
 
 export function CrudFormPage<S extends z.ZodObject<any, any>, Entity>({
   title,
   schema,
-  steps,
+  renderSections,
   id,
   createDefaults,
   api,
@@ -47,6 +52,7 @@ export function CrudFormPage<S extends z.ZodObject<any, any>, Entity>({
   canDelete = true,
   externallyBlocked = false,
   className,
+  disableSubmitUntilDirty = true,
 }: CrudFormPageProps<S, Entity>) {
   const queryClient = useQueryClient();
   const mode: "create" | "edit" = id ? "edit" : "create";
@@ -66,17 +72,15 @@ export function CrudFormPage<S extends z.ZodObject<any, any>, Entity>({
     return api.toDefaults(entityQuery.data);
   }, [mode, entityQuery.data, api, createDefaults]);
 
-  const resetKey =
-    mode === "edit"
-      ? entityQuery.data
-        ? `edit-${id}`
-        : `edit-loading-${id}`
-      : "create";
+  const resetKey = useMemo(() => {
+    if (mode === "create") return "create";
+    if (!id) return "edit-missing";
+    return entityQuery.data ? `edit-${id}-ready` : `edit-${id}-loading`;
+  }, [mode, id, entityQuery.data]);
 
   const saveMutation = useMutation({
-    mutationFn: async (values: z.infer<S>) => {
-      return mode === "create" ? api.create(values) : api.update(id!, values);
-    },
+    mutationFn: async (values: z.infer<S>) =>
+      mode === "create" ? api.create(values) : api.update(id!, values),
     onSuccess: async (entity) => {
       if (cache?.listKey) {
         await queryClient.invalidateQueries({ queryKey: cache.listKey });
@@ -113,42 +117,49 @@ export function CrudFormPage<S extends z.ZodObject<any, any>, Entity>({
     (mode === "edit" && entityQuery.isFetching);
 
   if (mode === "edit" && entityQuery.isLoading) {
-    return <div className="p-6">Loading...</div>;
+    return <div className="p-6 text-sm text-muted-foreground">Loading…</div>;
   }
+
   if (mode === "edit" && entityQuery.isError) {
-    return <div className="p-6">Failed to load.</div>;
+    return <div className="p-6 text-sm text-destructive">Failed to load.</div>;
   }
 
   return (
     <div className="space-y-4">
-      {mode === "edit" && canDelete && (
-        <div className="flex justify-end">
-          <Button
-            type="button"
-            variant="destructive"
-            onClick={() => setConfirmOpen(true)}
-            disabled={blocked}
-          >
-            Delete
-          </Button>
+      {(title || (mode === "edit" && canDelete)) && (
+        <div className="flex items-center justify-between gap-3">
+          {title ? <h1 className="text-lg font-semibold">{title}</h1> : <div />}
+
+          {mode === "edit" && canDelete && (
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={() => setConfirmOpen(true)}
+              disabled={blocked}
+            >
+              Delete
+            </Button>
+          )}
         </div>
       )}
 
-      <FormWizard
-        title={title}
-        schema={schema}
-        defaultValues={defaults as any}
-        steps={steps}
-        submitLabel={mode === "create" ? submitLabelCreate : submitLabelUpdate}
-        submitLoading={saveMutation.isPending}
-        submitDisabled={blocked}
-        externallyBlocked={externallyBlocked}
-        resetKey={resetKey}
-        onSubmit={async (values) => {
-          await saveMutation.mutateAsync(values);
-        }}
-        className={className}
-      />
+      <div className={className}>
+        <FormWizard
+          schema={schema}
+          defaultValues={defaults as any}
+          resetKey={resetKey}
+          blocked={blocked}
+          externallyBlocked={externallyBlocked}
+          submitLoading={saveMutation.isPending}
+          submitLabel={mode === "create" ? submitLabelCreate : submitLabelUpdate}
+          disableSubmitUntilDirty={disableSubmitUntilDirty}
+          // On a page, cancel usually navigates away; if you want, pass a handler
+          render={(methods) => renderSections(methods)}
+          onSubmit={async (values) => {
+            await saveMutation.mutateAsync(values);
+          }}
+        />
+      </div>
 
       <ConfirmDeleteDialog
         open={confirmOpen}
