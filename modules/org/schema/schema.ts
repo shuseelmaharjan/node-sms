@@ -1,28 +1,26 @@
 import { z } from "zod";
 
-/**
- * Backend response includes logo_file object, but payload may accept:
- * - logo_file: UUID (string)
- *
- * We'll send `logo_file` as UUID string or null.
- */
 export const schoolSchema = z.object({
   code: z.string().min(1, "Code is required"),
-  name: z.string().min(1, "Name is required"),
-  address: z.string().optional().default(""),
-  phone: z.string().optional().default(""),
-  email: z.string().email("Invalid email").optional().or(z.literal("")).default(""),
+  name: z.string().min(5, "Name must be at least 5 characters long"),
+  address: z.string().min(5, "Address must be at least 5 characters long"),
+  phone: z.string()
+    .min(1, "Phone is required")
+    .regex(/^[+]?[0-9\s\-\(\)]+$/, "Phone number can only contain numbers, spaces, hyphens, parentheses, and + symbol"),
+  email: z.string()
+    .min(1, "Email is required")
+    .email("Please enter a valid email address"),
   is_active: z.boolean().default(true),
 
-  // file UUID from ImagePickerField
-  logo_file: z.string().uuid("Invalid file id").nullable().optional(),
+  // Form keeps UUID here - now required
+  logo_file_id: z.string().uuid("Invalid file id").min(1, "Logo is required"),
 });
 
 export type SchoolFormValues = z.infer<typeof schoolSchema>;
 
 export type LogoFile = {
   id: string;
-  file: string;
+  file_url: string;
   file_type: string;
   original_name: string;
   size_bytes: number;
@@ -50,5 +48,5 @@ export const schoolCreateDefaults: SchoolFormValues = {
   phone: "",
   email: "",
   is_active: true,
-  logo_file: null,
+  logo_file_id: "", // Empty string for required field
 };

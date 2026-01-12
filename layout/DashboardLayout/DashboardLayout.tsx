@@ -10,7 +10,10 @@ import { navconfig } from "./components/navigation.config";
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { isLoading } = useAuth();
+  const version = process.env.NEXT_PUBLIC_APP_VERSION || "unknown";
   const year = new Date().getFullYear();
+  const tagline = process.env.NEXT_PUBLIC_APP_TAGLINE || "Education Platform";
+  const deployYear = process.env.NEXT_PUBLIC_APP_DEPLOY_YEAR || "2025";
 
   if (isLoading) {
     return (
@@ -27,7 +30,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       <AppSidebar navItems={navconfig} />
 
       <SidebarInset className="min-h-svh">
-        <DashboardHeader pageTitle="Dashboard" />
+        <DashboardHeader/>
 
         <main className="flex flex-1 flex-col">
           <div className="flex-1 p-4">
@@ -44,8 +47,8 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 
           <footer className="border-t bg-background px-4 py-3">
             <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
-              <span>© {year} Institute Management System</span>
-              <span className="opacity-80">Education Platform</span>
+              <span>Version: {version} ● {deployYear}-{year}</span>
+              <span className="opacity-80">{tagline}</span>
             </div>
           </footer>
         </main>

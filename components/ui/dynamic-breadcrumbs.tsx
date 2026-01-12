@@ -13,6 +13,7 @@ import {
   BreadcrumbEllipsis,
 } from "@/components/ui/breadcrumb";
 import { navconfig, type NavItem, type NavChild } from "@/layout/DashboardLayout/components/navigation.config";
+import { cn } from "@/lib/utils";
 
 interface BreadcrumbSegment {
   label: string;
@@ -107,70 +108,120 @@ interface DynamicBreadcrumbsProps {
   className?: string;
 }
 
-export function DynamicBreadcrumbs({ 
-  maxItems = 3, 
+export function DynamicBreadcrumbs({
+  maxItems = 3,
   showHome = true,
-  className 
+  className,
 }: DynamicBreadcrumbsProps) {
   const pathname = usePathname();
-  
+
   const breadcrumbs = useMemo(() => {
     let crumbs = generateBreadcrumbs(pathname);
-    
-    // Handle breadcrumb overflow with ellipsis
+
+    // optional: if you want to remove dashboard from crumbs
+    // if (!showHome) crumbs = crumbs.slice(1);
+
     if (crumbs.length > maxItems) {
       const first = crumbs[0];
-      const last = crumbs.slice(-2); // Keep last 2 items
-      crumbs = [first, { label: '...' }, ...last];
+      const last = crumbs.slice(-2);
+      crumbs = [first, { label: "..." }, ...last];
     }
-    
+
     return crumbs;
-  }, [pathname, maxItems]);
+  }, [pathname, maxItems, showHome]);
 
   if (breadcrumbs.length === 0) return null;
 
   return (
-    <Breadcrumb className={className}>
-      <BreadcrumbList>
-        {breadcrumbs.map((crumb, index) => {
-          const isLast = index === breadcrumbs.length - 1;
-          const isEllipsis = crumb.label === '...';
-          
-          return (
-            <Fragment key={`${crumb.label}-${index}`}>
-              {index > 0 && !isEllipsis && (
-                <BreadcrumbSeparator>
-                  <ChevronRight />
-                </BreadcrumbSeparator>
-              )}
-              
-              <BreadcrumbItem>
-                {isEllipsis ? (
-                  <BreadcrumbEllipsis />
-                ) : crumb.href ? (
-                  <Link 
-                    href={crumb.href} 
-                    className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    {crumb.icon}
-                    <span className="hidden sm:inline">{crumb.label}</span>
-                    {/* Show icon only on small screens for first item */}
-                    {index === 0 && crumb.icon && (
-                      <span className="sm:hidden">{crumb.icon}</span>
-                    )}
-                  </Link>
-                ) : (
-                  <BreadcrumbPage className="flex items-center gap-1.5 font-semibold">
-                    {crumb.icon}
-                    {crumb.label}
-                  </BreadcrumbPage>
+    <div className={cn("min-w-0", className)}>
+      {/* Mobile: horizontal scroll; Desktop: normal */}
+      <Breadcrumb>
+        <BreadcrumbList
+          className={cn(
+            "flex items-center",
+            // mobile friendly: single line + horizontal scroll
+            "max-w-full flex-nowrap overflow-x-auto whitespace-nowrap",
+            "scrollbar-hide [-webkit-overflow-scrolling:touch]",
+            // spacing tweaks
+            "gap-1 sm:gap-1.5"
+          )}
+        >
+          {breadcrumbs.map((crumb, index) => {
+            const isLast = index === breadcrumbs.length - 1;
+            const isEllipsis = crumb.label === "...";
+
+            return (
+              <Fragment key={`${crumb.label}-${index}`}>
+                {/* Separator (don’t show before first OR around ellipsis weirdly) */}
+                {index > 0 && !isEllipsis && (
+                  <BreadcrumbSeparator className="mx-1 sm:mx-1.5">
+                    <ChevronRight className="h-4 w-4 text-muted-foreground/60" />
+                  </BreadcrumbSeparator>
                 )}
-              </BreadcrumbItem>
-            </Fragment>
-          );
-        })}
-      </BreadcrumbList>
-    </Breadcrumb>
+
+                {/* Ellipsis item */}
+                {isEllipsis ? (
+                  <>
+                    {/* show separator before ellipsis */}
+                    <BreadcrumbSeparator className="mx-1 sm:mx-1.5">
+                      <ChevronRight className="h-4 w-4 text-muted-foreground/60" />
+                    </BreadcrumbSeparator>
+
+                    <BreadcrumbItem className="shrink-0">
+                      <BreadcrumbEllipsis className="h-4 w-4 text-muted-foreground" />
+                    </BreadcrumbItem>
+
+                    {/* show separator after ellipsis */}
+                    <BreadcrumbSeparator className="mx-1 sm:mx-1.5">
+                      <ChevronRight className="h-4 w-4 text-muted-foreground/60" />
+                    </BreadcrumbSeparator>
+                  </>
+                ) : (
+                  <BreadcrumbItem className="shrink-0">
+                    {crumb.href ? (
+                      <Link
+                        href={crumb.href}
+                        className={cn(
+                          "inline-flex items-center gap-1.5 rounded-md px-1.5 py-1 text-xs sm:text-sm",
+                          "text-muted-foreground hover:text-foreground transition-colors",
+                          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+                        )}
+                      >
+                        {/* On mobile, show only icon for first crumb; on sm+ show label */}
+                        {index === 0 && crumb.icon ? (
+                          <>
+                            <span className="sm:hidden">{crumb.icon}</span>
+                            <span className="hidden sm:inline-flex items-center gap-1.5">
+                              {crumb.icon}
+                              {crumb.label}
+                            </span>
+                          </>
+                        ) : (
+                          <span className="max-w-[18ch] sm:max-w-none truncate">
+                            {crumb.label}
+                          </span>
+                        )}
+                      </Link>
+                    ) : (
+                      <BreadcrumbPage
+                        className={cn(
+                          "inline-flex items-center gap-1.5 rounded-md px-1.5 py-1",
+                          "text-xs sm:text-sm font-semibold",
+                          "max-w-[22ch] truncate"
+                        )}
+                      >
+                        {index === 0 ? crumb.icon : null}
+                        <span className="truncate">{crumb.label}</span>
+                      </BreadcrumbPage>
+                    )}
+                  </BreadcrumbItem>
+                )}
+              </Fragment>
+            );
+          })}
+        </BreadcrumbList>
+      </Breadcrumb>
+    </div>
   );
 }
 

@@ -12,13 +12,17 @@ import { Button } from "@/components/ui/button";
 
 type UploadResponse = {
   id: string;
-  file: string;
+  file_url: string; // backend returns this
   file_type: string;
   original_name: string;
   size_bytes: number;
   is_temporary: boolean;
   meta: any;
   uploaded_at: string;
+  required: boolean;
+
+  // optional backward-compat if some envs still return "file"
+  file?: string;
 };
 
 type Props = {
@@ -26,6 +30,7 @@ type Props = {
   hint?: string;
   initialUri?: string | null;
 
+  required?: boolean;
   value?: string | null;
   onChange: (id: string | null) => void;
 
@@ -60,8 +65,9 @@ export function ImagePickerField({
   initialUri = null,
   value,
   onChange,
-  fileType = "photo",
+  fileType = "image", // better default to match backend
   error,
+  required = false,
   onUploadStatusChange,
   deleteOnRemove = false,
 }: Props) {
@@ -79,47 +85,47 @@ export function ImagePickerField({
     }
   }, [initialUri]);
 
-  // ✅ BACKEND PATHS
+  // backend paths
   const uploadUrl = "/api/v1/files/upload/";
   const deleteUrl = (id: string) => `/api/v1/files/${id}/delete/`;
 
   const uploadMutation = useMutation({
     mutationFn: async (formData: FormData) => {
       // Debug FormData contents
-      console.log('FormData contents:');
+      console.log("FormData contents:");
       for (const [key, value] of formData.entries()) {
         console.log(key, value);
       }
-      
-      console.log('Sending request to:', uploadUrl);
-      
-      // Get auth token from store
+
+      console.log("Sending request to:", uploadUrl);
+
       const accessToken = useAuthStore.getState().accessToken;
-      console.log('Access token:', accessToken ? 'Present' : 'Missing');
-      
-      // ✅ Create completely clean axios instance to avoid any transformations
+      console.log("Access token:", accessToken ? "Present" : "Missing");
+
+      // clean axios instance to avoid unexpected transforms
       const cleanAxios = axios.create({
         baseURL: api.defaults.baseURL,
         withCredentials: true,
-        // Don't set any default headers that might interfere
       });
-      
+
       const res = await cleanAxios.post<UploadResponse>(uploadUrl, formData, {
         headers: {
-          ...(accessToken && { 'Authorization': `Bearer ${accessToken}` }),
-          'X-Client-Type': 'web',
-          // Explicitly let browser handle multipart boundary
+          ...(accessToken && { Authorization: `Bearer ${accessToken}` }),
+          "X-Client-Type": "web",
+          // don't set Content-Type manually; browser sets boundary
         },
-        // Prevent axios from transforming FormData
         transformRequest: [(data) => data],
       });
-      
-      console.log('Upload response:', res);
+
+      console.log("Upload response:", res);
       return res.data;
     },
     onSuccess: (data) => {
       onChange(data.id);
-      setPreviewUrl(data.file);
+
+      // FIX: backend returns file_url, not file
+      const url = data.file_url ?? data.file ?? null;
+      setPreviewUrl(url);
 
       if (objectUrlRef.current) {
         URL.revokeObjectURL(objectUrlRef.current);
@@ -174,56 +180,40 @@ export function ImagePickerField({
   const handleFileSelect = useCallback(
     async (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
-      if (!file) {
-        console.log('No file selected');
-        return;
-      }
+      if (!file) return;
 
-      console.log('File selected:', {
+      console.log("File selected:", {
         name: file.name,
         size: file.size,
-        type: file.type
+        type: file.type,
       });
 
-      // Validate file
-      if (!file.type.startsWith('image/')) {
-        toast.error('Please select an image file');
+      if (!file.type.startsWith("image/")) {
+        toast.error("Please select an image file");
         return;
       }
 
-      if (file.size > 5 * 1024 * 1024) { // 5MB limit
-        toast.error('File size must be less than 5MB');
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("File size must be less than 5MB");
         return;
       }
 
       // Local preview immediately
       const localUrl = URL.createObjectURL(file);
-
       if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
       objectUrlRef.current = localUrl;
 
       setPreviewUrl(localUrl);
 
-      // Create FormData with proper field names
+      // Create FormData
       const formData = new FormData();
-      formData.append('file', file, file.name);
-      formData.append('file_type', fileType);
-
-      console.log('Created FormData with:', {
-        file: file,
-        file_type: fileType,
-        fileName: file.name
-      });
-
-      // Debug: Try to understand what the backend expects
-      console.log('About to send to endpoint:', uploadUrl);
-      console.log('FormData size:', formData.get('file') || 'unknown');
+      formData.append("file", file, file.name);
+      formData.append("file_type", fileType);
 
       try {
         await uploadMutation.mutateAsync(formData);
       } catch (error) {
-        console.error('Upload failed:', error);
-        // avoid "Uncaught (in promise)"
+        console.error("Upload failed:", error);
       } finally {
         e.target.value = "";
       }
@@ -264,7 +254,7 @@ export function ImagePickerField({
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <label className="text-sm font-medium">{title}</label>
+        <label className="text-sm font-medium">{title} {required ? <span className="text-destructive">*</span> : null}</label>
         {busy && (
           <span className="flex items-center gap-1 text-xs text-muted-foreground">
             <Loader2 size={14} className="animate-spin" />
@@ -305,7 +295,7 @@ export function ImagePickerField({
           </div>
         </div>
       ) : (
-        <div className="rounded-xl border bg-card">
+        <div className="rounded-xl bg-card">
           <div
             onClick={openPicker}
             className="flex cursor-pointer flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed border-primary/60 bg-background py-8 transition hover:bg-accent/20"

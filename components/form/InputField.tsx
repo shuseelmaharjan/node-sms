@@ -18,7 +18,7 @@ export const InputField = React.forwardRef<HTMLInputElement, InputFieldProps>(
       <div className="space-y-2">
         {label && (
           <div className="flex items-center justify-between">
-            <label className="text-sm font-medium">
+            <label className="text-xs sm:text-sm font-medium">
               {label} {required ? <span className="text-destructive">*</span> : null}
             </label>
           </div>
@@ -30,8 +30,18 @@ export const InputField = React.forwardRef<HTMLInputElement, InputFieldProps>(
           {...props}
         />
 
-        {hint && !error && <p className="text-xs text-muted-foreground">{hint}</p>}
-        {error?.message && <p className="text-xs font-medium text-destructive">{error.message}</p>}
+        {hint && !error && (
+          <p className="text-[11px] sm:text-xs text-muted-foreground leading-snug">
+            {hint}
+          </p>
+        )}
+
+        {/* Error */}
+        {error?.message && (
+          <p className="text-[11px] sm:text-xs font-medium text-destructive leading-snug">
+            {error.message}
+          </p>
+        )}
       </div>
     );
   }
