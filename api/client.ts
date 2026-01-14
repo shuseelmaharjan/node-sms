@@ -1,4 +1,3 @@
-// api/client.ts
 import axios, {
   AxiosError,
   AxiosHeaders,
@@ -36,7 +35,7 @@ export const api = axios.create({
   headers: { "X-Client-Type": "web" },
 });
 
-// ✅ IMPORTANT: make sure we do NOT have a forced JSON content-type on posts
+// IMPORTANT: make sure we do NOT have a forced JSON content-type on posts
 delete api.defaults.headers.post["Content-Type"];
 
 // Prevent multiple refresh attempts
@@ -46,39 +45,33 @@ let isRefreshing = false;
 async function refreshAccessToken(): Promise<string | null> {
   if (refreshPromise) return refreshPromise;
 
-  if (isRefreshing) {
-    while (isRefreshing) {
-      await new Promise((resolve) => setTimeout(resolve, 100));
-    }
-    return useAuthStore.getState().accessToken;
-  }
-
   isRefreshing = true;
+
   refreshPromise = (async () => {
     try {
       const response = await api.post("/api/auth/refresh/");
-      const { accessToken, user } = response.data as any;
+      const { accessToken } = response.data as any;
 
-      if (accessToken) {
-        const store = useAuthStore.getState();
-        store.setAccessToken(accessToken);
-        store.setSessionValid(true);
-        if (user) store.setUser(user);
-        return accessToken;
+      if (!accessToken) throw new Error("No accessToken in refresh response");
+
+      const store = useAuthStore.getState();
+      store.setAccessToken(accessToken);
+      store.setSessionValid(true);
+
+      // If user not present, fetch it once (helps auth guard + UI)
+      if (!store.user) {
+        try {
+          const me = await api.get("/api/auth/me/");
+          if ((me.data as any)?.user) store.setUser((me.data as any).user);
+        } catch {
+          // ignore; token is still set
+        }
       }
 
-      throw new Error("No access token in refresh response");
+      return accessToken;
     } catch (error) {
-      console.warn("Token refresh failed:", error);
+      // Do NOT navigate here (no window.location)
       useAuthStore.getState().clear();
-
-      if (
-        typeof window !== "undefined" &&
-        !window.location.pathname.includes("/login")
-      ) {
-        window.location.href = "/login";
-      }
-
       return null;
     } finally {
       refreshPromise = null;
@@ -89,7 +82,8 @@ async function refreshAccessToken(): Promise<string | null> {
   return refreshPromise;
 }
 
-// ✅ Add auth token + fix multipart uploads (Axios v1-safe)
+
+// Add auth token + fix multipart uploads (Axios v1-safe)
 api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   const token = useAuthStore.getState().accessToken;
   if (token) {
@@ -109,8 +103,8 @@ api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
       delete (config.headers as any)["content-type"];
     }
 
-    // ✅ DO NOT set multipart/form-data manually; browser will add boundary
-    // ✅ DO NOT force transformRequest; axios will send FormData correctly now
+    // Do NOT set multipart/form-data manually; browser will add boundary
+    // Do NOT force transformRequest; axios will send FormData correctly now
   }
 
   return config;

@@ -7,7 +7,9 @@ import {
   BookOpen,
   Calendar,
   BarChart3,
-  Settings
+  Settings,
+  Building,
+  UserCheck2
 } from "lucide-react";
 
 export type NavChild = {
@@ -38,6 +40,24 @@ export const navconfig: NavItem[] = [
     icon: Home,
     href: "/dashboard",
     exactMatch: true,
+  },
+  {
+    label: "Organizations",
+    icon: Building, 
+    children: [
+      { label: "Schools", href: "/dashboard/schools" },
+      { label: "Add Organization", href: "/dashboard/organizations/add" },
+      { label: "Manage Organizations", href: "/dashboard/organizations/manage" },
+    ],
+  },
+  {
+    label: "Roles & Permissions",
+    icon: UserCheck2,
+    children: [
+      { label: "All Roles", href: "/dashboard/roles" },
+      { label: "Add Role", href: "/dashboard/roles/add" },
+      { label: "Manage Permissions", href: "/dashboard/roles/permissions" },
+    ],
   },
   {
     label: "Students",

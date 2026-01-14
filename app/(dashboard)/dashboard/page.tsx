@@ -6,6 +6,8 @@ import { Users, BookOpen, Calendar, TrendingUp } from "lucide-react";
 
 export default function DashboardPage() {
   const { user } = useAuth();
+  
+  console.log('Dashboard page rendered successfully', { user: Boolean(user) });
 
   const stats = [
     {

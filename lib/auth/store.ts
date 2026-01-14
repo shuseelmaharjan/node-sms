@@ -52,6 +52,36 @@ export const useAuthStore = create<AuthState>()(
           hydrated: true,
           isInitialized: true 
         });
+        
+        // Clear persisted storage completely
+        if (typeof window !== 'undefined') {
+          // Clear localStorage items
+          const keys = Object.keys(localStorage);
+          keys.forEach(key => {
+            if (key.includes('auth') || key.includes('session') || key.includes('token')) {
+              localStorage.removeItem(key);
+            }
+          });
+          
+          // Clear sessionStorage items
+          const sessionKeys = Object.keys(sessionStorage);
+          sessionKeys.forEach(key => {
+            if (key.includes('auth') || key.includes('session') || key.includes('token')) {
+              sessionStorage.removeItem(key);
+            }
+          });
+          
+          // Clear all cookies by setting them to expire
+          const cookies = document.cookie.split(";");
+          cookies.forEach(cookie => {
+            const eqPos = cookie.indexOf("=");
+            const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
+            // Clear all cookies that might be related to auth
+            document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
+            document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=${window.location.hostname}`;
+            document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=.${window.location.hostname}`;
+          });
+        }
       },
       
       initialize: () => {

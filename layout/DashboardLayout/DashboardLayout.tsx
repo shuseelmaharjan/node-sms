@@ -33,7 +33,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         <DashboardHeader/>
 
         <main className="flex flex-1 flex-col">
-          <div className="flex-1 p-4">
+          <div className="flex-1 p-4 md:p-6 lg:p-8">
             <Suspense
               fallback={
                 <div className="grid place-items-center py-10">

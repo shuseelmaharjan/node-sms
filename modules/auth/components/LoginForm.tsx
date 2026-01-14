@@ -36,13 +36,13 @@ export default function LoginForm() {
 
   async function onSubmit(values: LoginSchema) {
     try {
-      console.log('LoginForm: Starting login...');
+      // console.log('LoginForm: Starting login...');
       await login(values.identifier, values.password);
       
-      console.log('LoginForm: Login successful, redirecting immediately...');
+      // console.log('LoginForm: Login successful, auth state updated');
       
-      // Immediate redirect without delay for better UX
-      router.replace('/dashboard');
+      // Let the auth layout handle the redirect to avoid conflicts
+      // The auth layout will detect the auth state change and redirect
       
     } catch (err: any) {
       // All error handling is done via toasts in the API client
@@ -74,7 +74,7 @@ export default function LoginForm() {
                     <FormLabel>Email or phone</FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="admin@school.com or 98XXXXXXXX"
+                        placeholder="Email or phone number"
                         autoComplete="username"
                         {...field}
                         onChange={(e) => {

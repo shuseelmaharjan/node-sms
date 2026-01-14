@@ -18,6 +18,7 @@ import { InputField } from "@/components/form/InputField";
 import { SwitchField } from "@/components/form/SwitchField";
 
 import { schoolCreateDefaults, schoolSchema, type School } from "../schema/schema";
+import { LoadingState } from "@/components/ui/LoadingState";
 
 const LIST_KEY = ["org", "schools"];
 const DETAIL_PREFIX = ["org", "schools", "detail"];
@@ -106,17 +107,13 @@ export function SchoolSettings() {
 
   if (schoolsQuery.isLoading) {
     return (
-      <div className="rounded-2xl border bg-card p-4 sm:p-6">
-        <div className="text-sm text-muted-foreground">Loading…</div>
-      </div>
+      <LoadingState title="Checking authentication…" subtitle="Please wait" variant="page" />
     );
   }
 
   if (schoolsQuery.isError) {
     return (
-      <div className="rounded-2xl border bg-card p-4 sm:p-6">
-        <div className="text-sm text-destructive">Failed to load school settings.</div>
-      </div>
+      <LoadingState title="Failed to load school data" subtitle="Please try again later" variant="page" />
     );
   }
 

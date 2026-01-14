@@ -8,26 +8,26 @@ import { useAuthStore } from "./store";
 const PUBLIC_ROUTES = ["/login"];
 
 export function useAuthGuard() {
-  const { accessToken, user, hydrated } = useAuthStore();
+  const { accessToken, user, hydrated, sessionValid } = useAuthStore();
   const router = useRouter();
   const pathname = usePathname();
   const [isChecking, setIsChecking] = useState(true);
 
-  const isAuthenticated = Boolean(accessToken && user);
+  const isAuthenticated = Boolean(accessToken && user && sessionValid);
   const isPublicRoute = PUBLIC_ROUTES.some(route => pathname.startsWith(route));
 
   useEffect(() => {
-    if (!hydrated) return; // Wait for auth state to hydrate
+  if (!hydrated) return;
 
-    // If user is not authenticated and on a protected route, redirect to login
-    if (!isPublicRoute && !isAuthenticated) {
-      const redirectUrl = `/login?redirect=${encodeURIComponent(pathname)}`;
-      router.push(redirectUrl);
-      return;
-    }
+  if (!isPublicRoute && !isAuthenticated) {
+    router.replace(`/login?redirect=${encodeURIComponent(pathname)}`);
+    router.refresh();
+    return;
+  }
 
-    setIsChecking(false);
-  }, [isAuthenticated, isPublicRoute, hydrated, pathname, router]);
+  setIsChecking(false);
+}, [hydrated, isPublicRoute, isAuthenticated, pathname, router]);
+
 
   return {
     isAuthenticated,

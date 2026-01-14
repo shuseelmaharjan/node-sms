@@ -24,15 +24,17 @@ export function middleware(request: NextRequest) {
                           request.cookies.has('refreshToken') ||
                           request.cookies.has('refresh') ||
                           allCookies.some(cookie => 
-                            cookie.name.includes('refresh') || 
-                            cookie.name.includes('session') ||
-                            cookie.name.includes('token')
+                            cookie.name.includes('refresh') && 
+                            cookie.value && 
+                            cookie.value.trim() !== '' &&
+                            cookie.value !== 'undefined' &&
+                            cookie.value !== 'null'
                           );
   
-  console.log('=== MIDDLEWARE DEBUG ===');
-  console.log('Path:', pathname);
-  console.log('All cookies:', allCookies.map(c => `${c.name}=${c.value.substring(0, 20)}...`));
-  console.log('Has refresh token:', hasRefreshToken);
+  // console.log('=== MIDDLEWARE DEBUG ===');
+  // console.log('Path:', pathname);
+  // console.log('All cookies:', allCookies.map(c => `${c.name}=${c.value.substring(0, 20)}...`));
+  // console.log('Has valid refresh token:', hasRefreshToken);
   
   // Check if current path is protected
   const isProtectedRoute = protectedRoutes.some(route => 
@@ -46,22 +48,27 @@ export function middleware(request: NextRequest) {
 
   console.log('Route classification:', { isProtectedRoute, isPublicRoute });
 
-  // MODIFIED: Don't block protected routes if no cookies - let client-side auth handle it
-  // This allows access token based auth to work even without httpOnly cookies
+  // MODIFIED: Allow protected routes even without cookies - let client-side auth handle it
+  // This prevents redirect loops when user has valid access token but no httpOnly cookies
   
   // Only redirect away from public routes if we have clear evidence of authentication
   if (isPublicRoute && hasRefreshToken) {
-    console.log('✅ Redirecting to dashboard - has refresh token');
+    // console.log('Redirecting to dashboard - has refresh token');
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 
-  // Root path redirect - default to login since we can't detect auth state
+  // Root path redirect - check for auth state
   if (pathname === '/') {
-    console.log('🏠 Root redirect to login (no cookie detection)');
-    return NextResponse.redirect(new URL('/login', request.url));
+    if (hasRefreshToken) {
+      // console.log('Root redirect to dashboard (has auth)');
+      return NextResponse.redirect(new URL('/dashboard', request.url));
+    } else {
+      // console.log('Root redirect to login (no auth)');
+      return NextResponse.redirect(new URL('/login', request.url));
+    }
   }
 
-  console.log('✨ Allowing request to continue - client-side auth will handle protection');
+  // console.log('Allowing request to continue - client-side auth will handle protection');
   return NextResponse.next();
 }
 
