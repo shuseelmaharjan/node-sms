@@ -143,7 +143,7 @@ export function FormWizard<S extends Schema>({
               Reset
             </Button>
 
-            <Button type="submit" disabled={!canSubmit}>
+            <Button type="submit">
               {submitLoading ? "Saving..." : submitLabel}
             </Button>
           </div>

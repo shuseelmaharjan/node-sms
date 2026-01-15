@@ -1,6 +1,3 @@
-export { SchoolSettings } from "./components/component";
-export { schoolSchema, schoolCreateDefaults } from "./schema/schema";
-export type { School, SchoolFormValues } from "./schema/schema";
 // --- Session ---
 export { SessionsSettings } from "./components/SessionsSettings";
 export type { Session } from "./schema/session.schema";
