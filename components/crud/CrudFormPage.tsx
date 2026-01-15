@@ -155,9 +155,24 @@ export function CrudFormPage<S extends z.ZodObject<any, any>, Entity>({
           disableSubmitUntilDirty={disableSubmitUntilDirty}
           // On a page, cancel usually navigates away; if you want, pass a handler
           render={(methods) => renderSections(methods)}
-          onSubmit={async (values) => {
+          onSubmit={async (values, methods) => {
             await saveMutation.mutateAsync(values);
+
+            if (mode === "create") {
+              // clear after create
+              methods.reset(createDefaults as any, { keepDefaultValues: true });
+              methods.clearErrors();
+              return;
+            }
+
+            // mode === "edit"
+            // keep values but make form clean after update
+            const currentValues = methods.getValues();
+            methods.reset(currentValues, { keepDefaultValues: false });
+            methods.clearErrors();
           }}
+
+
         />
       </div>
 
