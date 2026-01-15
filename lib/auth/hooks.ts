@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "@/lib/auth/store";
 import { login as authLogin, logout as authLogout, bootstrapSession } from "@/lib/auth/session";
 import { useConfirmation } from "@/components/ui/confirmation-modal";
@@ -10,6 +11,7 @@ export function useAuth() {
   const { accessToken, user, hydrated, isInitialized, sessionValid } = useAuthStore();
   const { showConfirmation } = useConfirmation();
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   // User is authenticated if they have both access token AND user data
   const isAuthenticated = Boolean(accessToken && user && sessionValid);
@@ -49,7 +51,7 @@ export function useAuth() {
     });
     
     if (confirmed) {
-      await authLogout(true, router); // Pass router for better redirect
+      await authLogout(true, router, queryClient); // Pass queryClient for cleanup
     }
   };
 
@@ -64,6 +66,6 @@ export function useAuth() {
     // Actions
     login: authLogin,
     logout,
-    logoutWithoutConfirmation: () => authLogout(true, router), // Skip confirmation, use router
+    logoutWithoutConfirmation: () => authLogout(true, router, queryClient), // Skip confirmation, use router and queryClient
   };
 }

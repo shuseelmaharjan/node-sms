@@ -255,8 +255,20 @@ export function CrudFormModal<S extends z.ZodObject<any, any>, Entity>({
                 disableSubmitUntilDirty={disableSubmitUntilDirty}
                 className="space-y-2 sm:space-y-4"
                 render={(methods) => renderSections(methods)}
-                onSubmit={async (values) => {
+                onSubmit={async (values, methods) => {
                   await saveMutation.mutateAsync(values);
+                  // Reset form after successful operation
+                  if (mode === "create") {
+                    // For create operations, reset to clean state
+                    methods.reset(createDefaults, { keepDefaultValues: true });
+                    methods.clearErrors();
+                  } else if (mode === "edit") {
+                    // For edit operations, reset form state to mark as clean
+                    // This clears the "dirty" state while keeping the current values
+                    const currentValues = methods.getValues();
+                    methods.reset(currentValues, { keepDefaultValues: false });
+                    methods.clearErrors();
+                  }
                 }}
               />
             )}

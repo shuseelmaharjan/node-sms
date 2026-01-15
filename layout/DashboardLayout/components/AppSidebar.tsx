@@ -68,7 +68,7 @@ function RenderNavChild({ child, pathname }: { child: NavChild; pathname: string
           className={cn(
             // base
             "group relative rounded-lg px-3 py-2 text-sm transition-all",
-            "hover:bg-accent/60 hover:text-foreground",
+            "hover:text-foreground",
             // active
             isActive
               ? "bg-primary/12 text-primary font-semibold shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.18)]"
@@ -99,7 +99,7 @@ function RenderNavChild({ child, pathname }: { child: NavChild; pathname: string
           <SidebarMenuSubButton
             className={cn(
               "group rounded-lg px-3 py-2 text-sm transition-colors",
-              "hover:bg-accent/60 hover:text-foreground",
+              "hover:text-foreground",
               isGroupActive ? "text-foreground font-semibold" : "text-muted-foreground"
             )}
           >
@@ -146,9 +146,12 @@ export function AppSidebar({ navItems, logoSrc = "/logo.svg" }: AppSidebarProps)
             <SidebarMenuButton
               size="lg"
               className={cn(
-                "rounded-2xl px-2 py-2 transition-all",
-                "hover:bg-accent/50",
-                "shadow-sm shadow-black/5"
+                "px-2 py-2 transition-none",          
+                "hover:bg-transparent",              
+                "hover:text-inherit",                 
+                "focus:bg-transparent",                
+                "active:bg-transparent",              
+                "data-[active=true]:bg-transparent"    
               )}
             >
               <div
@@ -158,7 +161,9 @@ export function AppSidebar({ navItems, logoSrc = "/logo.svg" }: AppSidebarProps)
                 )}
               >
                 {collapsed ? (
-                  <span className="text-primary font-extrabold text-sm tracking-tight">IM</span>
+                  <span className="text-primary font-extrabold text-sm tracking-tight">
+                    {process.env.NEXT_PUBLIC_APP_ORG_SHORTCUT || "IMS"}
+                  </span>
                 ) : (
                   <Image
                     src={logoSrc}
@@ -174,13 +179,17 @@ export function AppSidebar({ navItems, logoSrc = "/logo.svg" }: AppSidebarProps)
               {!collapsed && (
                 <div className="ml-2 grid flex-1 text-left leading-tight">
                   <span className="truncate text-sm font-semibold text-foreground">
-                    Institute Management
+                    {process.env.NEXT_PUBLIC_APP_NAME || "Institute Management"}
+                  </span>
+                  <span className="truncate text-xs text-muted-foreground">
+                    {process.env.NEXT_PUBLIC_APP_TAGLINE || "Empowering Education Management"}
                   </span>
                 </div>
               )}
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
+
 
         {/* subtle divider */}
       </SidebarHeader>
@@ -210,7 +219,6 @@ export function AppSidebar({ navItems, logoSrc = "/logo.svg" }: AppSidebarProps)
                           <SidebarMenuButton
                             className={cn(
                               "group relative rounded-xl py-3 transition-all",
-                              "hover:bg-accent/60",
                               // more “pill” active state
                               isParentActive &&
                               "bg-primary/12 text-primary font-semibold shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.18)]"
@@ -267,7 +275,6 @@ export function AppSidebar({ navItems, logoSrc = "/logo.svg" }: AppSidebarProps)
                       isActive={isActive}
                       className={cn(
                         "group relative rounded-xl py-3 transition-all",
-                        "hover:bg-accent/60",
                         isActive &&
                         "bg-primary/12 text-primary font-semibold shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.18)]"
                       )}
@@ -302,7 +309,7 @@ export function AppSidebar({ navItems, logoSrc = "/logo.svg" }: AppSidebarProps)
       {/* Footer */}
       {/* Footer */}
       <SidebarFooter className="px-2 py-3">
-        <div className="mb-2 h-px w-full bg-border/70" />
+        {/* <div className="mb-2 h-px w-full bg-border/70" /> */}
 
         {(() => {
           const appName =

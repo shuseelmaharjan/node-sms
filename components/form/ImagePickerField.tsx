@@ -85,6 +85,23 @@ export function ImagePickerField({
     }
   }, [initialUri]);
 
+  // Reset preview when value becomes null (form reset)
+  useEffect(() => {
+    if (value === null) {
+      setPreviewUrl(initialUri ?? null);
+      
+      if (objectUrlRef.current) {
+        URL.revokeObjectURL(objectUrlRef.current);
+        objectUrlRef.current = null;
+      }
+      
+      // Clear the file input
+      if (inputRef.current) {
+        inputRef.current.value = "";
+      }
+    }
+  }, [value, initialUri]);
+
   // backend paths
   const uploadUrl = "/api/v1/files/upload/";
   const deleteUrl = (id: string) => `/api/v1/files/${id}/delete/`;

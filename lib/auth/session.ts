@@ -1,57 +1,69 @@
+// lib/auth/session.ts
+import { toast } from "sonner";
 import { authApi } from "./api";
 import { useAuthStore } from "./store";
-import { toast } from "sonner";
 
-// Prevent multiple bootstrap calls
+/**
+ * Prevent multiple bootstrap calls in parallel
+ */
 let isBootstrapping = false;
 
+/**
+ * Bootstraps auth state on app start (or after reload)
+ * - tries /refresh (cookie-based)
+ * - if success, sets access token and fetches /me
+ * - if fail, clears auth state (guard will redirect to /login)
+ */
 export async function bootstrapSession() {
   if (isBootstrapping) return;
-  
+
   const store = useAuthStore.getState();
-  if (store.isInitialized && store.sessionValid) return;
-  
+
+  // If already initialized + session valid, skip
+  if (store.isInitialized && store.sessionValid && store.accessToken && store.user) {
+    store.setHydrated(true);
+    return;
+  }
+
   isBootstrapping = true;
-  
+
   try {
-    // Try to refresh the token (this validates the httpOnly refresh token)
-    const response = await authApi.refresh();
-    
-    if (response.accessToken) {
-      store.setAccessToken(response.accessToken);
-      store.setSessionValid(true);
-      
-      // Get user info after successful refresh
-      try {
-        const userResponse = await authApi.me();
-        if (userResponse.user) {
-          store.setUser(userResponse.user);
-        }
-      } catch (userError) {
-        console.warn('Failed to fetch user info after refresh:', userError);
-        // Don't clear session if user fetch fails, just continue with token
-      }
-      
-      console.log('Session validated successfully');
-    } else {
+    // Validate refresh cookie and obtain access token
+    const refreshRes = await authApi.refresh();
+
+    if (!refreshRes?.accessToken) {
       store.clear();
-      console.log('No valid session found');
+      return;
     }
-  } catch (error) {
-    console.warn('Session bootstrap failed:', error);
-    
-    // Don't show toast errors during bootstrap on login page or initial loads
-    // Let the component handle showing appropriate messages
-    if (typeof window !== 'undefined' && 
-        !window.location.pathname.includes('/login') && 
-        !window.location.pathname.includes('/debug')) {
-      const apiError = error as any;
-      if (apiError?.response?.status !== 401) {
-        toast.error('Session validation failed');
+
+    store.setAccessToken(refreshRes.accessToken);
+    store.setSessionValid(true);
+
+    // Fetch user data (required by your isAuthenticated condition)
+    try {
+      const meRes = await authApi.me();
+      if (meRes?.user) {
+        store.setUser(meRes.user);
+      } else {
+        // If user missing, treat as invalid auth state
+        store.clear();
+      }
+    } catch (err) {
+      // If /me fails, session is likely invalid or server denied
+      store.clear();
+    }
+  } catch (error: any) {
+    // No toast on boot usually (avoid noisy UX)
+    store.clear();
+
+    // Only show toast if user is not on login and it’s not a basic 401
+    if (typeof window !== "undefined") {
+      const isLogin = window.location.pathname.startsWith("/login");
+      const status = error?.response?.status;
+      if (!isLogin && status && status !== 401) {
+        toast.error("Session validation failed");
       }
     }
-    
-    store.clear();
   } finally {
     store.setHydrated(true);
     store.setInitialized(true);
@@ -59,102 +71,97 @@ export async function bootstrapSession() {
   }
 }
 
+/**
+ * Login:
+ * - calls /login
+ * - stores accessToken + user in Zustand
+ * - does NOT redirect here (UI/layout should redirect)
+ */
 export async function login(identifier: string, password: string) {
   try {
-    console.log('Login attempt starting...');
     const data = await authApi.login(identifier, password);
-    
-    if (!data || !data.accessToken) {
-      throw new Error('Login failed: Invalid response from server');
+
+    if (!data?.accessToken || !data?.user) {
+      throw new Error("Login failed: Invalid response from server");
     }
-    
-    console.log('Login successful, setting auth state...');
+
     const store = useAuthStore.getState();
     store.setAccessToken(data.accessToken);
     store.setUser(data.user);
     store.setSessionValid(true);
+
+    // Ensure app stops showing “initializing…”
     store.setHydrated(true);
     store.setInitialized(true);
-    
-    console.log('Auth state updated:', {
-      hasToken: Boolean(data.accessToken),
-      hasUser: Boolean(data.user),
-      authenticated: Boolean(data.accessToken && data.user)
-    });
-    
-    // Show success message
+
+    // Only show toast here if your authApi.login doesn’t already show it
     toast.success(data.message || "Signed in successfully");
-    
+
     return data;
   } catch (error: any) {
-    console.error('Login failed:', error);
-    
-    // If it's our clean error from auth API, don't show duplicate toast
-    if (error.message === 'LOGIN_FAILED') {
-      throw error; // Just re-throw without additional logging/toast
-    }
-    
-    // For other unexpected errors, show toast
-    const message = error?.response?.data?.detail || 
-                   error?.response?.data?.message || 
-                   error?.message || 
-                   'Login failed';
+    // authApi.login already shows toast & throws LOGIN_FAILED clean error
+    if (error?.message === "LOGIN_FAILED") throw error;
+
+    const message =
+      error?.response?.data?.detail ||
+      error?.response?.data?.message ||
+      error?.message ||
+      "Login failed";
+
     toast.error(message);
     throw new Error(message);
   }
 }
 
-export async function logout(skipConfirmation: boolean = false, router?: any) {
-  // For browser confirm fallback when not in component context
+/**
+ * Logout:
+ * - tries server logout (clears refresh cookie)
+ * - clears React Query cache (optional)
+ * - clears Zustand auth state
+ * - navigates via router (no hard reload)
+ */
+export async function logout(
+  skipConfirmation: boolean = false,
+  router?: { replace: (path: string) => void; refresh?: () => void },
+  queryClient?: { clear: () => void }
+) {
   if (!skipConfirmation) {
     const confirmed = confirm("Are you sure you want to sign out?");
-    if (!confirmed) {
-      return; // User cancelled
-    }
+    if (!confirmed) return;
   }
 
   const store = useAuthStore.getState();
-  
+
   try {
-    console.log('Logout attempt starting...');
-    
-    // Immediately clear local state to prevent UI hanging
-    store.clear();
-    console.log('Local auth state cleared immediately');
-    
-    // Try to logout on server (clears httpOnly refresh token)
+    // Server logout (cookie revoke)
     if (store.sessionValid) {
-      await authApi.logout();
-      console.log('Server logout successful');
-    } else {
-      console.log('No active session, performing local logout');
-    }
-  } catch (error: any) {
-    console.warn('Server logout failed:', error);
-    
-    // Don't show error toast if logout API already handled it
-    if (error.message !== 'LOGOUT_FAILED') {
-      toast.error('Logout failed', { 
-        description: 'You have been signed out locally.' 
-      });
-    }
-  } finally {
-    // Ensure state is cleared
-    store.clear();
-    console.log('Final auth state clear completed');
-    
-    // Show success toast
-    toast.success("Signed out successfully");
-    
-    // Use router if provided, otherwise fallback to window.location
-    if (router) {
-      console.log('Redirecting via Next.js router...');
-      router.push('/login');
-    } else {
-      console.log('Redirecting via window.location...');
-      if (typeof window !== 'undefined') {
-        window.location.href = '/login';
+      try {
+        await authApi.logout();
+      } catch {
+        // ignore server logout errors; still clear local
       }
+    }
+
+    // Clear react-query cache (important)
+    if (queryClient) {
+      queryClient.clear();
+    }
+
+    // Clear local auth
+    store.clear();
+
+    toast.success("Signed out successfully");
+  } finally {
+    // Ensure fully cleared
+    store.clear();
+
+    // ✅ SPA navigation only — no reload
+    if (router) {
+      router.replace("/login");
+      router.refresh?.();
+    } else if (typeof window !== "undefined") {
+      // fallback only
+      window.location.href = "/login";
     }
   }
 }

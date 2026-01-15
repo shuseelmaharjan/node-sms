@@ -1,57 +1,52 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth";
 
-export default function AuthLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  const { isLoading, isAuthenticated } = useAuth();
-  const router = useRouter();
+function AuthGate({ label }: { label: string }) {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-white to-slate-100">
+      <div className="w-full max-w-md rounded-2xl border bg-white/70 shadow-sm backdrop-blur p-6">
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 rounded-2xl border bg-slate-50 grid place-items-center">
+            <div className="h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-slate-700" />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-slate-900">{label}</p>
+            <p className="text-xs text-slate-500">Please wait a moment…</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
-  console.log('AuthLayout render:', { isLoading, isAuthenticated });
+export default function AuthLayout({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const { isLoading, isAuthenticated } = useAuth();
 
   useEffect(() => {
-    // If authenticated, redirect to dashboard immediately
-    if (isAuthenticated && !isLoading) {
-      console.log('AuthLayout: User authenticated, redirecting to dashboard');
-      // Use replace to avoid back button issues
-      router.replace('/dashboard');
+    if (isLoading) return;
+
+    if (isAuthenticated) {
+      const redirect = searchParams.get("redirect");
+      router.replace(redirect || "/dashboard");
+      // router.refresh(); // optional: usually not needed
     }
-  }, [isAuthenticated, isLoading, router]);
+  }, [isAuthenticated, isLoading, router, searchParams]);
 
-  // Show minimal loading during quick auth check
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
-        <div className="flex flex-col items-center space-y-4">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-          <p className="text-sm text-gray-600">Checking authentication...</p>
-        </div>
-      </div>
-    );
-  }
+  // While auth is being checked, show a single consistent loading UI
+  if (isLoading) return <AuthGate label="Checking authentication…" />;
 
-  // If authenticated, show success state while redirecting  
-  if (isAuthenticated) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
-        <div className="flex flex-col items-center space-y-4">
-          <div className="animate-pulse rounded-full h-8 w-8 bg-green-500"></div>
-          <p className="text-sm text-green-600 font-medium">Login successful! Redirecting...</p>
-        </div>
-      </div>
-    );
-  }
+  // If authenticated, we’re redirecting: show a lightweight redirect gate
+  if (isAuthenticated) return <AuthGate label="Redirecting…" />;
 
+  // Not authenticated: show login page
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
-      <div className="w-full max-w-md">
-        {children}
-      </div>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-white to-slate-100 px-4">
+      <div className="w-full max-w-md">{children}</div>
     </div>
   );
 }

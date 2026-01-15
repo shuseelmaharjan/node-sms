@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import { School, Users, Shield, SlidersHorizontal } from "lucide-react";
+import { School, Users, ShieldCheck , SlidersHorizontal, KeyRound } from "lucide-react";
 
 export type NavItem = {
   label: string;
@@ -16,6 +16,18 @@ export const settingsNavConfig: NavItem[] = [
     exactMatch: true,
   },
   {
+    label: "Security",
+    href: "/dashboard/settings/security",
+    icon: ShieldCheck,
+    exactMatch: true,
+  },
+  {
+    label: "Change Password",
+    href: "/dashboard/settings/change-password",
+    icon: KeyRound,
+    exactMatch: true,
+  },
+  {
     label: "Users",
     href: "/dashboard/settings/users",
     icon: Users,
@@ -23,7 +35,7 @@ export const settingsNavConfig: NavItem[] = [
   {
     label: "Roles & Permissions",
     href: "/dashboard/settings/roles",
-    icon: Shield,
+    icon: ShieldCheck,
   },
   {
     label: "General",

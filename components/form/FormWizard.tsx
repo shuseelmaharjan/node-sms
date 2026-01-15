@@ -78,12 +78,19 @@ export function FormWizard<S extends Schema>({
   // Force reset when resetKey changes (modal open, record changes, etc.)
   useEffect(() => {
     if (resetKey == null) return;
+
     methods.reset(stableDefaults, {
-      keepDefaultValues: true,
+      keepDefaultValues: false, // ✅ important
     });
     methods.clearErrors();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resetKey]);
+
+  const handleReset = () => {
+    methods.reset(stableDefaults, { keepDefaultValues: false }); // important
+    methods.clearErrors();
+  };
+
 
   const isDirty = methods.formState.isDirty;
   const isValid = methods.formState.isValid;
@@ -95,10 +102,10 @@ export function FormWizard<S extends Schema>({
     isValid &&
     (!disableSubmitUntilDirty || isDirty);
 
-  const handleReset = () => {
-    methods.reset(stableDefaults, { keepDefaultValues: true });
-    methods.clearErrors();
-  };
+  // const handleReset = () => {
+  //   methods.reset(stableDefaults, { keepDefaultValues: true });
+  //   methods.clearErrors();
+  // };
 
   const submit = methods.handleSubmit((values) => onSubmit(values, methods));
 
@@ -121,10 +128,10 @@ export function FormWizard<S extends Schema>({
           <div className="flex gap-2">
             <span className="flex md:hidden">
               {onCancel && (
-              <Button type="button" variant="outline" onClick={onCancel} disabled={isBlocked}>
-                Cancel
-              </Button>
-            )}
+                <Button type="button" variant="outline" onClick={onCancel} disabled={isBlocked}>
+                  Cancel
+                </Button>
+              )}
             </span>
 
             <Button
