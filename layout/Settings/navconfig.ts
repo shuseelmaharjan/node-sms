@@ -10,10 +10,9 @@ export type NavItem = {
 
 export const settingsNavConfig: NavItem[] = [
   {
-    label: "Schools",
-    href: "/dashboard/settings/schools",
-    icon: School,
-    exactMatch: true,
+    label: "General",
+    href: "/dashboard/settings/general",
+    icon: SlidersHorizontal,
   },
   {
     label: "Security",
@@ -37,9 +36,5 @@ export const settingsNavConfig: NavItem[] = [
     href: "/dashboard/settings/roles",
     icon: ShieldCheck,
   },
-  {
-    label: "General",
-    href: "/dashboard/settings/general",
-    icon: SlidersHorizontal,
-  },
+  
 ];
