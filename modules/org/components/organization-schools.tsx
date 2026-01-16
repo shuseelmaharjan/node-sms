@@ -331,6 +331,7 @@ export function OrganizationSchoolsCrudPage() {
                 <div className="lg:col-span-8 space-y-6">
                   <InputField
                     label="Organization Name"
+                    placeholder="Organization Name"
                     required
                     {...methods.register("name")}
                     error={methods.formState.errors.name}
@@ -340,6 +341,7 @@ export function OrganizationSchoolsCrudPage() {
                     <InputField
                       label="Email"
                       type="email"
+                      placeholder="Email"
                       required
                       {...methods.register("email")}
                       error={methods.formState.errors.email}
@@ -347,6 +349,7 @@ export function OrganizationSchoolsCrudPage() {
                     <InputField
                       label="Code"
                       required
+                      placeholder="SCH001"
                       {...methods.register("code")}
                       error={methods.formState.errors.code}
                     />
@@ -356,12 +359,14 @@ export function OrganizationSchoolsCrudPage() {
                     <InputField
                       label="Address"
                       required
+                      placeholder="Kathmandu, Nepal"
                       {...methods.register("address")}
                       error={methods.formState.errors.address}
                     />
                     <InputField
                       label="Phone"
                       required
+                      placeholder="98********"
                       {...methods.register("phone")}
                       error={methods.formState.errors.phone}
                     />

@@ -46,7 +46,7 @@ export const navconfig: NavItem[] = [
     icon: Building, 
     children: [
       { label: "Schools", href: "/dashboard/schools" },
-      { label: "Add Organization", href: "/dashboard/organizations/add" },
+      { label: "School Settings", href: "/dashboard/school-settings" },
       { label: "Manage Organizations", href: "/dashboard/organizations/manage" },
     ],
   },
