@@ -47,14 +47,13 @@ export const navconfig: NavItem[] = [
     children: [
       { label: "Schools", href: "/dashboard/schools" },
       { label: "School Settings", href: "/dashboard/school-settings" },
-      { label: "Manage Organizations", href: "/dashboard/organizations/manage" },
     ],
   },
   {
     label: "Roles & Permissions",
     icon: UserCheck2,
     children: [
-      { label: "All Roles", href: "/dashboard/roles" },
+      { label: "Roles", href: "/dashboard/roles" },
       { label: "Add Role", href: "/dashboard/roles/add" },
       { label: "Manage Permissions", href: "/dashboard/roles/permissions" },
     ],
