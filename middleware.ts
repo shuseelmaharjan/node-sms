@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 // Protected routes that require authentication
-const protectedRoutes = ['/dashboard'];
+const protectedRoutes = ['/'];
 
 // Public routes that don't require auth
 const publicRoutes = ['/login'];
@@ -61,7 +61,7 @@ export function middleware(request: NextRequest) {
   if (pathname === '/') {
     if (hasRefreshToken) {
       // console.log('Root redirect to dashboard (has auth)');
-      return NextResponse.redirect(new URL('/dashboard', request.url));
+      return NextResponse.redirect(new URL('/overviewoverview', request.url));
     } else {
       // console.log('Root redirect to login (no auth)');
       return NextResponse.redirect(new URL('/login', request.url));

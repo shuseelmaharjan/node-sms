@@ -26,7 +26,7 @@ export default function CookieDebugPage() {
   };
 
   const forceRedirect = () => {
-    window.location.href = "/dashboard";
+    window.location.href = "/overview";
   };
 
   const cookieList = cookies ? cookies.split(';').map(c => c.trim()) : [];
@@ -100,7 +100,7 @@ export default function CookieDebugPage() {
             <Button onClick={() => window.location.href = "/login"} variant="outline">
               Go to Login
             </Button>
-            <Button onClick={() => window.location.href = "/dashboard"} variant="outline">
+            <Button onClick={() => window.location.href = "/overview"} variant="outline">
               Go to Dashboard
             </Button>
             <Button onClick={() => window.location.href = "/debug-auth"} variant="outline">

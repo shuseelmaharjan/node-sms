@@ -16,7 +16,7 @@ export default function NotFound() {
         </CardHeader>
         <CardContent className="text-center">
           <Button asChild>
-            <Link href="/dashboard">
+            <Link href="/overview">
               Return to Dashboard
             </Link>
           </Button>
