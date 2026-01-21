@@ -11,29 +11,29 @@ export type NavItem = {
 export const settingsNavConfig: NavItem[] = [
   {
     label: "General",
-    href: "/dashboard/settings/general",
+    href: "/settings/general",
     icon: SlidersHorizontal,
   },
   {
     label: "Security",
-    href: "/dashboard/settings/security",
+    href: "/settings/security",
     icon: ShieldCheck,
     exactMatch: true,
   },
   {
     label: "Change Password",
-    href: "/dashboard/settings/change-password",
+    href: "/settings/change-password",
     icon: KeyRound,
     exactMatch: true,
   },
   {
     label: "Users",
-    href: "/dashboard/settings/users",
+    href: "/settings/users",
     icon: Users,
   },
   {
     label: "Roles & Permissions",
-    href: "/dashboard/settings/roles",
+    href: "/settings/roles",
     icon: ShieldCheck,
   },
   

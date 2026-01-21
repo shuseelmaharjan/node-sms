@@ -32,7 +32,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
 
     if (isAuthenticated) {
       const redirect = searchParams.get("redirect");
-      router.replace(redirect || "/dashboard");
+      router.replace(redirect || "/overview");
       // router.refresh(); // optional: usually not needed
     }
   }, [isAuthenticated, isLoading, router, searchParams]);

@@ -12,7 +12,7 @@ export default function AuthDebugPage() {
   const handleManualRedirect = () => {
     console.log('Manual redirect attempt...');
     if (auth.isAuthenticated) {
-      window.location.href = '/dashboard';
+      window.location.href = '/overview';
     } else {
       alert('User is not authenticated');
     }
@@ -20,7 +20,7 @@ export default function AuthDebugPage() {
 
   const handleRouterRedirect = () => {
     console.log('Router redirect attempt...');
-    router.push('/dashboard');
+    router.push('/overview');
   };
 
   return (

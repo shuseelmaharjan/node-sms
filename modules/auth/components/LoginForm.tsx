@@ -18,7 +18,7 @@ import { Separator } from "@/components/ui/separator";
 export default function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectTo = searchParams.get("redirect") || "/dashboard";
+  const redirectTo = searchParams.get("redirect") || "/overview";
 
   const { login } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
