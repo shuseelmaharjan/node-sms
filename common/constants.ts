@@ -1,9 +1,9 @@
 export type SelectOption = { value: string; label: string };
 
 export const GENDER_OPTIONS: SelectOption[] = [
-  { value: "male", label: "Male" },
-  { value: "female", label: "Female" },
-  { value: "other", label: "Others" },
+  { value: "Male", label: "Male" },
+  { value: "Female", label: "Female" },
+  { value: "Other", label: "Others" },
 ];
 
 export const BLOOD_GROUP_OPTIONS: SelectOption[] = [

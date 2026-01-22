@@ -50,22 +50,8 @@ export function AdminStepShell(props: {
             <p className="text-muted-foreground">{props.description}</p>
           ) : null}
         </div>
-
-        <Button variant="outline" onClick={() => router.push("/admins")}>
-          Back to Admins
-        </Button>
       </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Setup Progress</CardTitle>
-          <CardDescription>
-            Complete all steps to {props.mode === "create" ? "create" : "update"} the admin
-          </CardDescription>
-        </CardHeader>
-
-        <CardContent>
-          <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
+      <div className="flex w-full flex-col gap-3 sm:flex-row sm:gap-4">
             <StepButton
               step={1}
               label="Personal"
@@ -91,8 +77,6 @@ export function AdminStepShell(props: {
               onClick={props.toClient}
             />
           </div>
-        </CardContent>
-      </Card>
 
       {props.children}
     </div>

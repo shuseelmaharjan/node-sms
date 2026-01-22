@@ -65,23 +65,13 @@ export function AdminsListPage() {
 
   return (
     <>
-      <div className="container mx-auto py-6 space-y-6">
+      <div className="container mx-auto space-y-6">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Admins</h1>
-            <p className="text-muted-foreground">Manage administrator accounts and permissions</p>
+            <h1 className="text-2xl font-bold tracking-tight">Admins</h1>
           </div>
 
           <div className="flex items-center gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => qc.invalidateQueries({ queryKey: adminsKeys.all })}
-              disabled={blocked}
-            >
-              <RefreshCw className="h-4 w-4" />
-            </Button>
-
             <Button asChild>
               <Link href="/admins/new/personal">Add Admin</Link>
             </Button>

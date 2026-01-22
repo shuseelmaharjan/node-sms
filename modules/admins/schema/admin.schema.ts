@@ -56,7 +56,7 @@ export const clientInfoSchema = z.object({
     .regex(/^\d{4}-\d{2}-\d{2}$/, "Use BS format YYYY-MM-DD"),
   date_of_birth_type: z.literal("bs"),
 
-  gender: z.enum(["male", "female", "other"]),
+  gender: z.enum(["Male", "Female", "Other"]),
   blood_group: z.enum(["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"]),
   nationality: z.enum(["Nepali", "Indian", "Other"]),
   religion: z.enum(["Hindu", "Muslim", "Other"]),

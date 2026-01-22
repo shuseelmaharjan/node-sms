@@ -12,6 +12,7 @@ type Props<T extends FieldValues> = {
   disabled?: boolean;
   placeholder?: string;
   hint?: string;
+  required?: boolean;
 };
 
 export function NepaliBsDatePickerField<T extends FieldValues>({
@@ -21,6 +22,7 @@ export function NepaliBsDatePickerField<T extends FieldValues>({
   disabled,
   placeholder = "YYYY-MM-DD (BS)",
   hint = "Pick a date (BS)",
+  required = false,
 }: Props<T>) {
   const inputRef = React.useRef<HTMLInputElement | null>(null);
   const initializedRef = React.useRef(false);
@@ -67,15 +69,17 @@ export function NepaliBsDatePickerField<T extends FieldValues>({
 
         return (
           <div className="space-y-2">
-            <label className="text-sm font-medium">{label}</label>
+            <label className="text-sm font-medium">
+              {label}
+              {required && <span className="text-destructive"> *</span>}
+            </label>
 
             <Input
               ref={inputRef}
               disabled={disabled}
               placeholder={placeholder}
               className={cn(hasError && "border-destructive focus-visible:ring-destructive")}
-              // IMPORTANT: let plugin write into the input; we just “read” it
-              onInput={(e) => field.onChange((e.target as HTMLInputElement).value)}
+              // IMPORTANT: let plugin write into the input; we just “read” it              onChange={(e) => field.onChange(e.target.value)}              onInput={(e) => field.onChange((e.target as HTMLInputElement).value)}
               onBlur={() => field.onBlur()}
             />
 

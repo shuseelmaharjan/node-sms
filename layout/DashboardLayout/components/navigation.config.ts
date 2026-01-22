@@ -44,10 +44,8 @@ export const navconfig: NavItem[] = [
   {
     label: "Admins",
     icon: Users,
-    children: [
-      { label: "All Admins", href: "/admins" },
-      { label: "Add Admin", href: "/admins/new" },
-    ],
+    href: "/admins",
+    exactMatch: true,
   },
   {
     label: "Organizations",

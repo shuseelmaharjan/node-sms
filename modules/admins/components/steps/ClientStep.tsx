@@ -6,7 +6,6 @@ import { Controller, useFieldArray } from "react-hook-form";
 import { FormWizard } from "@/components/form/FormWizard";
 import { InputField } from "@/components/form/InputField";
 import { ImagePickerField } from "@/components/form/ImagePickerField";
-import { Button } from "@/components/ui/button"; // still used for remove? we will not remove addresses now, but keep import ok
 import {
   Select,
   SelectContent,
@@ -19,36 +18,8 @@ import { clientInfoSchema, type ClientInfoValues } from "../../schema/admin.sche
 import { NepaliBsDatePickerField } from "@/lib/nepaliDate/NepaliBsDatePickerField";
 import { GenderSelectField } from "@/components/select/GenderSelectField";
 import { BloodGroupSelectField, MotherTongueSelectField, NationalitySelectField, ReligionSelectField } from "@/components/select";
+import { NepalAddressFields } from "@/components/address/NepalAddressFields";
 
-const GENDER_OPTIONS = [
-  { value: "male", label: "Male" },
-  { value: "female", label: "Female" },
-  { value: "other", label: "Others" },
-];
-
-const BLOOD_GROUP_OPTIONS = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"] as const;
-
-const NATIONALITY_OPTIONS = [
-  { value: "Nepali", label: "Nepali" },
-  { value: "Indian", label: "Indian" },
-  { value: "Other", label: "Other" },
-] as const;
-
-const RELIGION_OPTIONS = [
-  { value: "Hindu", label: "Hindu" },
-  { value: "Muslim", label: "Muslim" },
-  { value: "Other", label: "Other" },
-] as const;
-
-const MOTHER_TONGUE_OPTIONS = [
-  { value: "Nepali", label: "Nepali" },
-  { value: "Maithili", label: "Maithili" },
-  { value: "Bhojpuri", label: "Bhojpuri" },
-  { value: "Tharu", label: "Tharu" },
-  { value: "Tamang", label: "Tamang" },
-  { value: "Newari", label: "Newari" },
-  { value: "Other", label: "Other" },
-] as const;
 
 const DOC_TYPES = [
   { type: "photo", title: "Photo", remarks: "Photo" },
@@ -111,7 +82,7 @@ export function ClientStep(props: {
     date_of_birth: p?.date_of_birth_display ?? "",
     date_of_birth_type: "bs",
 
-    gender: (p?.gender ?? "male") as any,
+    gender: (p?.gender ?? "Male") as any,
     blood_group: (p?.blood_group ?? "O+") as any,
     nationality: (p?.nationality ?? "Nepali") as any,
     religion: (p?.religion ?? "Hindu") as any,
@@ -133,20 +104,23 @@ export function ClientStep(props: {
       submitLoading={props.submitLoading}
       submitLabel={props.mode === "create" ? "Submit Admin" : "Update Admin"}
       disableSubmitUntilDirty={props.mode !== "create"}
-      onSubmit={async (values) => props.onSubmit(values)}
+      onSubmit={async (values) => {
+        console.log("Form submission values:", values);
+        await props.onSubmit(values);
+      }}
       render={(methods) => {
-        const addresses = useFieldArray({ control: methods.control, name: "addresses" });
         const documents = useFieldArray({ control: methods.control, name: "documents" });
 
         return (
           <div className="space-y-6">
             {/* Top fields */}
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 p-3 rounded-lg border">
               <NepaliBsDatePickerField<ClientInfoValues>
                 control={methods.control as any}
                 name="date_of_birth"
                 label="Date of Birth (BS)"
                 disabled={readOnly}
+                required
               />
 
 
@@ -177,109 +151,27 @@ export function ClientStep(props: {
             </div>
 
             {/* Addresses (exactly 2: permanent + temporary, both required) */}
-            <div className="rounded-lg border p-3 space-y-3">
-              <div className="flex items-center justify-between">
-                <h3 className="font-medium">Addresses</h3>
-                <p className="text-xs text-muted-foreground">Permanent and Temporary are required</p>
-              </div>
-
-              {addresses.fields.map((f, idx) => (
-                <div key={f.id} className="rounded border p-3 space-y-3">
-                  <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-                    <Controller
-                      control={methods.control}
-                      name={`addresses.${idx}.address_type` as const}
-                      render={({ field, fieldState }) => (
-                        <FormSelect
-                          label="Type"
-                          required
-                          disabled={readOnly}
-                          value={field.value}
-                          onValueChange={field.onChange}
-                          error={fieldState.error?.message}
-                          options={[
-                            { value: "permanent", label: "Permanent" },
-                            { value: "temporary", label: "Temporary" },
-                          ]}
-                        />
-                      )}
-                    />
-
-                    <InputField
-                      label="Province"
-                      required
-                      disabled={readOnly}
-                      {...methods.register(`addresses.${idx}.province` as const)}
-                      error={methods.formState.errors.addresses?.[idx]?.province as any}
-                    />
-
-                    <InputField
-                      label="District"
-                      required
-                      disabled={readOnly}
-                      {...methods.register(`addresses.${idx}.district` as const)}
-                      error={methods.formState.errors.addresses?.[idx]?.district as any}
-                    />
-
-                    <InputField
-                      label="Municipality"
-                      required
-                      disabled={readOnly}
-                      {...methods.register(`addresses.${idx}.municipality` as const)}
-                      error={methods.formState.errors.addresses?.[idx]?.municipality as any}
-                    />
-
-                    <InputField
-                      label="Ward No"
-                      required
-                      disabled={readOnly}
-                      {...methods.register(`addresses.${idx}.ward_no` as const)}
-                      error={methods.formState.errors.addresses?.[idx]?.ward_no as any}
-                    />
-
-                    <InputField
-                      label="Street"
-                      required
-                      disabled={readOnly}
-                      {...methods.register(`addresses.${idx}.street` as const)}
-                      error={methods.formState.errors.addresses?.[idx]?.street as any}
-                    />
-
-                    <InputField
-                      label="Tole"
-                      required
-                      disabled={readOnly}
-                      {...methods.register(`addresses.${idx}.tole` as const)}
-                      error={methods.formState.errors.addresses?.[idx]?.tole as any}
-                    />
-
-                    <InputField
-                      label="Postal Code"
-                      required
-                      disabled={readOnly}
-                      {...methods.register(`addresses.${idx}.postal_code` as const)}
-                      error={methods.formState.errors.addresses?.[idx]?.postal_code as any}
-                    />
-
-                    <InputField
-                      label="House No"
-                      disabled={readOnly}
-                      {...methods.register(`addresses.${idx}.house_no` as const)}
-                      error={methods.formState.errors.addresses?.[idx]?.house_no as any}
-                    />
-
-                    <InputField
-                      label="Country"
-                      required
-                      disabled={readOnly}
-                      {...methods.register(`addresses.${idx}.country` as const)}
-                      error={methods.formState.errors.addresses?.[idx]?.country as any}
-                    />
-                  </div>
-
-                  {/* Optional: primary toggle can be added, but you didn’t ask for it */}
-                </div>
-              ))}
+            <div className="grid grid-cols-1 gap-6 space-y-6">
+              <NepalAddressFields<ClientInfoValues>
+                title="Permanent Address"
+                baseName={"addresses.0" as any}
+                control={methods.control}
+                register={methods.register}
+                setValue={methods.setValue}
+                watch={methods.watch}
+                errors={methods.formState.errors}
+                disabled={readOnly}
+              />
+              <NepalAddressFields<ClientInfoValues>
+                title="Temporary Address"
+                baseName={"addresses.1" as any}
+                control={methods.control}
+                register={methods.register}
+                setValue={methods.setValue}
+                watch={methods.watch}
+                errors={methods.formState.errors}
+                disabled={readOnly}
+              />
             </div>
 
             {/* Documents (fixed 5, no Add button, uses ImagePickerField) */}
@@ -340,38 +232,5 @@ export function ClientStep(props: {
         );
       }}
     />
-  );
-}
-
-function FormSelect(props: {
-  label: string;
-  required?: boolean;
-  disabled?: boolean;
-  value: string;
-  onValueChange: (v: string) => void;
-  error?: string;
-  options: { value: string; label: string }[];
-}) {
-  return (
-    <div className="space-y-1">
-      <label className="text-sm font-medium">
-        {props.label} {props.required ? <span className="text-destructive">*</span> : null}
-      </label>
-
-      <Select value={props.value} onValueChange={props.onValueChange} disabled={props.disabled}>
-        <SelectTrigger className={props.error ? "border-destructive" : ""}>
-          <SelectValue placeholder={`Select ${props.label}`} />
-        </SelectTrigger>
-        <SelectContent>
-          {props.options.map((o) => (
-            <SelectItem key={o.value} value={o.value}>
-              {o.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-
-      {props.error ? <p className="text-xs text-destructive">{props.error}</p> : null}
-    </div>
   );
 }
