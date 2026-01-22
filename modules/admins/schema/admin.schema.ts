@@ -33,10 +33,10 @@ export const addressSchema = z.object({
   district: z.string().min(1),
   municipality: z.string().min(1),
   ward_no: z.string().min(1),
-  street: z.string().default(""),
-  tole: z.string().default(""),
+  street: z.string().min(1),
+  tole: z.string().min(1),
   house_no: z.string().default(""),
-  postal_code: z.string().default(""),
+  postal_code: z.string().min(1),
   is_primary: z.boolean().default(false),
 });
 
@@ -50,16 +50,37 @@ export const documentSchema = z.object({
 });
 
 export const clientInfoSchema = z.object({
-  date_of_birth: z.string().min(1, "DOB is required"),
+  date_of_birth: z
+    .string()
+    .min(1, "DOB is required")
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Use BS format YYYY-MM-DD"),
   date_of_birth_type: z.literal("bs"),
-  gender: z.string().min(1),
-  blood_group: z.string().min(1),
-  nationality: z.string().min(1),
-  religion: z.string().min(1),
-  mother_tongue: z.string().min(1),
+
+  gender: z.enum(["male", "female", "other"]),
+  blood_group: z.enum(["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"]),
+  nationality: z.enum(["Nepali", "Indian", "Other"]),
+  religion: z.enum(["Hindu", "Muslim", "Other"]),
+  mother_tongue: z.enum(["Nepali", "Maithili", "Bhojpuri", "Tharu", "Tamang", "Newari", "Other"]),
+
   citizenship_no: z.string().min(1),
   pan_no: z.string().min(1),
-  addresses: z.array(addressSchema).min(1),
-  documents: z.array(documentSchema).min(1),
+
+  // exactly 2: permanent + temporary
+  addresses: z
+    .array(addressSchema)
+    .length(2, "Both permanent and temporary address are required"),
+
+  documents: z
+    .array(
+      z.object({
+        document_type: z.enum(["photo", "citizenship_front", "citizenship_back", "pan", "signature"]),
+        file: z.string().uuid().nullable().default(null),
+        issued_by: z.string().default(""),
+        issued_date: z.string().nullable().default(null),
+        expiry_date: z.string().nullable().default(null),
+        remarks: z.string().default(""),
+      })
+    )
+    .length(5, "All 5 documents are required"),
 });
 export type ClientInfoValues = z.infer<typeof clientInfoSchema>;

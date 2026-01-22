@@ -10,24 +10,21 @@ type Props<T extends FieldValues> = {
   name: any;
   label: string;
   disabled?: boolean;
-  placeholder?: string; // e.g. "2080-01-15"
-  hint?: string;        // optional helper text
+  placeholder?: string;
+  hint?: string;
 };
-
-function isBsDate(value: string) {
-  // Simple BS format check: YYYY-MM-DD
-  // (Doesn't validate calendar correctness, just shape)
-  return /^\d{4}-\d{2}-\d{2}$/.test(value);
-}
 
 export function NepaliBsDatePickerField<T extends FieldValues>({
   control,
   name,
   label,
   disabled,
-  placeholder = "YYYY-MM-DD (BS) e.g. 2080-01-15",
-  hint = "Format: YYYY-MM-DD (BS)",
+  placeholder = "YYYY-MM-DD (BS)",
+  hint = "Pick a date (BS)",
 }: Props<T>) {
+  const inputRef = React.useRef<HTMLInputElement | null>(null);
+  const initializedRef = React.useRef(false);
+
   return (
     <Controller
       control={control}
@@ -35,29 +32,55 @@ export function NepaliBsDatePickerField<T extends FieldValues>({
       render={({ field, fieldState }) => {
         const hasError = Boolean(fieldState.error);
 
+        React.useEffect(() => {
+          const el = inputRef.current as any;
+          if (!el) return;
+
+          // keep DOM value in sync (uncontrolled input)
+          if ((el.value ?? "") !== (field.value ?? "")) {
+            el.value = field.value ?? "";
+          }
+
+          // init only once
+          if (initializedRef.current) return;
+
+          const tryInit = () => {
+            if (typeof el.nepaliDatePicker !== "function") return false;
+
+            el.nepaliDatePicker({
+              dateFormat: "YYYY-MM-DD",
+              closeOnDateSelect: true,
+            });
+
+            initializedRef.current = true;
+            return true;
+          };
+
+          if (tryInit()) return;
+
+          const t = window.setInterval(() => {
+            if (tryInit()) window.clearInterval(t);
+          }, 100);
+
+          return () => window.clearInterval(t);
+        }, [field.value]);
+
         return (
           <div className="space-y-2">
             <label className="text-sm font-medium">{label}</label>
 
             <Input
-              value={field.value ?? ""}
-              onChange={(e) => field.onChange(e.target.value)}
-              onBlur={(e) => {
-                // Optional: normalize whitespace
-                const v = (e.target.value ?? "").trim();
-                field.onChange(v);
-                field.onBlur();
-              }}
+              ref={inputRef}
               disabled={disabled}
               placeholder={placeholder}
               className={cn(hasError && "border-destructive focus-visible:ring-destructive")}
-              inputMode="numeric"
+              // IMPORTANT: let plugin write into the input; we just “read” it
+              onInput={(e) => field.onChange((e.target as HTMLInputElement).value)}
+              onBlur={() => field.onBlur()}
             />
 
             {!hasError ? (
-              <p className="text-xs text-muted-foreground">
-                {hint}
-              </p>
+              <p className="text-xs text-muted-foreground">{hint}</p>
             ) : (
               <p className="text-xs text-destructive">{fieldState.error?.message}</p>
             )}
