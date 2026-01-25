@@ -19,9 +19,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 
+import { InputField } from "../fields/InputField";
 import {
   fetchDistricts,
   fetchMunicipalities,
@@ -109,8 +110,8 @@ export function NepalAddressFields<T extends FieldValues>({
     // Clear dependent fields/options whenever province changes
     setDistricts([]);
     setMunicipalities([]);
-    setValue(districtPath, "" as any, { shouldValidate: true, shouldDirty: true });
-    setValue(municipalityPath, "" as any, { shouldValidate: true, shouldDirty: true });
+    setValue(districtPath, undefined as any, { shouldDirty: true, shouldValidate: false });
+    setValue(municipalityPath, undefined as any, { shouldDirty: true, shouldValidate: false });
 
     if (!provinceValue) return;
 
@@ -136,14 +137,14 @@ export function NepalAddressFields<T extends FieldValues>({
     let alive = true;
 
     setMunicipalities([]);
-    setValue(municipalityPath, "" as any, { shouldValidate: true, shouldDirty: true });
+    setValue(municipalityPath, undefined as any, { shouldDirty: true, shouldValidate: false });
 
     if (!districtValue) return;
 
     (async () => {
       try {
         setLoadingMunicipality(true);
-        const data = await fetchMunicipalities(districtValue);
+        const data = await fetchMunicipalities({ districtId: districtValue });
         if (!alive) return;
         setMunicipalities(data);
       } finally {
@@ -160,8 +161,13 @@ export function NepalAddressFields<T extends FieldValues>({
   const provinceError = getErr(errors, `${baseName}.province`);
   const districtError = getErr(errors, `${baseName}.district`);
   const municipalityError = getErr(errors, `${baseName}.municipality`);
-  const wardError = getErr(errors, `${baseName}.ward_no`);
-  const toleError = getErr(errors, `${baseName}.tole`);
+
+  const wardErrorMsg = getErr(errors, `${baseName}.ward_no`);
+  const toleErrorMsg = getErr(errors, `${baseName}.tole`);
+
+  // Convert string error -> FieldError-like shape for InputField
+  const wardError = wardErrorMsg ? ({ message: wardErrorMsg } as any) : undefined;
+  const toleError = toleErrorMsg ? ({ message: toleErrorMsg } as any) : undefined;
 
   return (
     <div className="rounded-lg border p-3 space-y-3">
@@ -179,8 +185,8 @@ export function NepalAddressFields<T extends FieldValues>({
               label="Province"
               required
               disabled={disabled}
-              value={field.value ?? ""}
-              onValueChange={field.onChange}
+              value={field.value ? String(field.value) : ""}
+              onValueChange={(v) => field.onChange(v || undefined)}
               loading={loadingProvince}
               options={provinces}
               error={provinceError}
@@ -197,8 +203,8 @@ export function NepalAddressFields<T extends FieldValues>({
               label="District"
               required
               disabled={disabled || !provinceValue}
-              value={field.value ?? ""}
-              onValueChange={field.onChange}
+              value={field.value ? String(field.value) : ""}
+              onValueChange={(v) => field.onChange(v || undefined)}
               loading={loadingDistrict}
               options={districts}
               error={districtError}
@@ -216,8 +222,8 @@ export function NepalAddressFields<T extends FieldValues>({
               label="Municipality"
               required
               disabled={disabled || !districtValue}
-              value={field.value ?? ""}
-              onValueChange={field.onChange}
+              value={field.value ? String(field.value) : ""}
+              onValueChange={(v) => field.onChange(v || undefined)}
               loading={loadingMunicipality}
               options={municipalities}
               error={municipalityError}
@@ -227,39 +233,31 @@ export function NepalAddressFields<T extends FieldValues>({
         />
 
         {/* Ward No (number only) */}
-        <div className="space-y-1">
-          <label className="text-sm font-medium">
-            Ward No <span className="text-destructive">*</span>
-          </label>
-          <Input
-            disabled={disabled}
-            inputMode="numeric"
-            pattern="[0-9]*"
-            {...register(wardPath as any, {
-              onChange: (e) => {
-                // keep only digits
-                e.target.value = String(e.target.value ?? "").replace(/\D/g, "");
-              },
-            })}
-            className={cn(wardError && "border-destructive focus-visible:ring-destructive")}
-            placeholder="e.g. 12"
-          />
-          {wardError ? <p className="text-xs text-destructive">{wardError}</p> : null}
-        </div>
+        <InputField
+          label="Ward No"
+          required
+          disabled={disabled}
+          inputMode="numeric"
+          pattern="[0-9]*"
+          placeholder="e.g. 12"
+          error={wardError}
+          {...register(wardPath as any, {
+            onChange: (e) => {
+              // keep only digits
+              e.target.value = String(e.target.value ?? "").replace(/\D/g, "");
+            },
+          })}
+        />
 
         {/* Tole (required) */}
-        <div className="space-y-1">
-          <label className="text-sm font-medium">
-            Tole <span className="text-destructive">*</span>
-          </label>
-          <Input
-            disabled={disabled}
-            {...register(tolePath as any)}
-            className={cn(toleError && "border-destructive focus-visible:ring-destructive")}
-            placeholder="e.g. Putalisadak"
-          />
-          {toleError ? <p className="text-xs text-destructive">{toleError}</p> : null}
-        </div>
+        <InputField
+          label="Tole"
+          required
+          disabled={disabled}
+          placeholder="e.g. Putalisadak"
+          error={toleError}
+          {...register(tolePath as any)}
+        />
       </div>
     </div>
   );
@@ -276,24 +274,22 @@ function FieldSelect(props: {
   error?: string;
   placeholder?: string;
 }) {
-  return (
-    <div className="space-y-1">
-      <label className="text-sm font-medium">
-        {props.label} {props.required ? <span className="text-destructive">*</span> : null}
-      </label>
+  const id = React.useId();
 
-      <Select
-        value={props.value}
-        onValueChange={props.onValueChange}
-        disabled={props.disabled}
-      >
-        <SelectTrigger className={props.error ? "border-destructive w-full" : "w-full"}>
+  return (
+    <div className="space-y-2">
+      <Label htmlFor={id} className="text-xs sm:text-sm font-medium">
+        {props.label}
+        {props.required ? <span className="text-destructive ml-0.5">*</span> : null}
+      </Label>
+
+      <Select value={props.value} onValueChange={props.onValueChange} disabled={props.disabled}>
+        <SelectTrigger
+          id={id}
+          className={cn("w-full", props.error && "border-destructive focus-visible:ring-destructive/30")}
+        >
           <SelectValue
-            placeholder={
-              props.loading
-                ? "Loading..."
-                : props.placeholder ?? `Select ${props.label}`
-            }
+            placeholder={props.loading ? "Loading..." : props.placeholder ?? `Select ${props.label}`}
           />
         </SelectTrigger>
 
@@ -306,7 +302,11 @@ function FieldSelect(props: {
         </SelectContent>
       </Select>
 
-      {props.error ? <p className="text-xs text-destructive">{props.error}</p> : null}
+      {props.error ? (
+        <p className="text-[11px] sm:text-xs font-medium text-destructive leading-snug">
+          {props.error}
+        </p>
+      ) : null}
     </div>
   );
 }

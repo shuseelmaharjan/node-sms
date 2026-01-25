@@ -1,5 +1,10 @@
-import { redirect } from "next/navigation";
+import { AdminViewPage } from "@/modules/admins/pages/AdminViewPage";
 
-export default function Page({ params }: { params: { id: string } }) {
-  redirect(`/admins/${params.id}/edit/personal`);
+interface Props {
+  params: Promise<{ id: string }>;
+}
+
+export default async function Page({ params }: Props) {
+  const { id } = await params;
+  return <AdminViewPage id={id} />;
 }

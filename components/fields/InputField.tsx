@@ -3,6 +3,7 @@
 import * as React from "react";
 import type { FieldError } from "react-hook-form";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 
 type InputFieldProps = React.ComponentProps<typeof Input> & {
@@ -13,20 +14,28 @@ type InputFieldProps = React.ComponentProps<typeof Input> & {
 };
 
 export const InputField = React.forwardRef<HTMLInputElement, InputFieldProps>(
-  ({ label, hint, error, required, className, ...props }, ref) => {
+  ({ label, hint, error, required, className, id, ...props }, ref) => {
+    const inputId = id ?? React.useId();
+
     return (
       <div className="space-y-2">
         {label && (
-          <div className="flex items-center justify-between">
-            <label className="text-xs sm:text-sm font-medium">
-              {label} {required ? <span className="text-destructive">*</span> : null}
-            </label>
-          </div>
+          <Label
+            htmlFor={inputId}
+            className="text-xs sm:text-sm font-medium"
+          >
+            {label}
+            {required ? <span className="text-destructive ml-0.5">*</span> : null}
+          </Label>
         )}
 
         <Input
           ref={ref}
-          className={cn(error && "border-destructive focus-visible:ring-destructive/30", className)}
+          id={inputId}
+          className={cn(
+            error && "border-destructive focus-visible:ring-destructive/30",
+            className
+          )}
           {...props}
         />
 
@@ -36,7 +45,6 @@ export const InputField = React.forwardRef<HTMLInputElement, InputFieldProps>(
           </p>
         )}
 
-        {/* Error */}
         {error?.message && (
           <p className="text-[11px] sm:text-xs font-medium text-destructive leading-snug">
             {error.message}

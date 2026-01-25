@@ -81,7 +81,7 @@ export function adminsColumns(args: {
               </DropdownMenuItem>
 
               <DropdownMenuItem asChild>
-                <Link href={`/admins/${r.id}/edit/personal`} className="flex items-center gap-2">
+                <Link href={`/admins/create?tab=personal&userId=${r.id}`} className="flex items-center gap-2">
                   <Edit className="h-4 w-4" /> Edit
                 </Link>
               </DropdownMenuItem>

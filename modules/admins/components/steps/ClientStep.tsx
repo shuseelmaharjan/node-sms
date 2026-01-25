@@ -4,18 +4,10 @@ import * as React from "react";
 import { Controller, useFieldArray } from "react-hook-form";
 
 import { FormWizard } from "@/components/form/FormWizard";
-import { InputField } from "@/components/form/InputField";
+import { InputField } from "@/components/fields/InputField";
 import { ImagePickerField } from "@/components/form/ImagePickerField";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-
 import { clientInfoSchema, type ClientInfoValues } from "../../schema/admin.schema";
-import { NepaliBsDatePickerField } from "@/lib/nepaliDate/NepaliBsDatePickerField";
+import { NepaliBsDatePickerField } from "@/components/nepaliDate/NepaliBsDatePickerField";
 import { GenderSelectField } from "@/components/select/GenderSelectField";
 import { BloodGroupSelectField, MotherTongueSelectField, NationalitySelectField, ReligionSelectField } from "@/components/select";
 import { NepalAddressFields } from "@/components/address/NepalAddressFields";

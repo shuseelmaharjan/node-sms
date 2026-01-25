@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { FormWizard } from "@/components/form/FormWizard";
-import { InputField } from "@/components/form/InputField";
+import { InputField } from "@/components/fields/InputField";
 import { personalInfoSchema, type PersonalInfoValues } from "../../schema/admin.schema";
 
 export function PersonalStep(props: {

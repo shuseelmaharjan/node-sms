@@ -22,6 +22,7 @@ export function AdminsListPage() {
   const [q, setQ] = React.useState("");
   const [pageIndex, setPageIndex] = React.useState(0);
   const [pageSize, setPageSize] = React.useState(10);
+  const [showAll, setShowAll] = React.useState(false);
   const [sorting, setSorting] = React.useState<SortingState>([{ id: "role", desc: false }]);
 
   const [deleteTarget, setDeleteTarget] = React.useState<AdminListItem | null>(null);
@@ -30,14 +31,18 @@ export function AdminsListPage() {
 
   React.useEffect(() => {
     setPageIndex(0);
-  }, [q, pageSize, ordering]);
+  }, [q, pageSize, ordering, showAll]);
+
+  // When showing all records, use a large page size
+  const effectivePageSize = showAll ? 1000 : pageSize;
+  const effectivePageIndex = showAll ? 0 : pageIndex;
 
   const listQuery = useQuery({
-    queryKey: adminsKeys.list({ q, pageIndex, pageSize, ordering }),
+    queryKey: adminsKeys.list({ q, pageIndex: effectivePageIndex, pageSize: effectivePageSize, ordering }),
     queryFn: () =>
       fetchAdmins({
-        page: pageIndex + 1,
-        page_size: pageSize,
+        page: effectivePageIndex + 1,
+        page_size: effectivePageSize,
         search: q || undefined,
         ordering: ordering || undefined,
       }),
@@ -55,7 +60,7 @@ export function AdminsListPage() {
   const pageData = listQuery.data;
   const rows = pageData?.results ?? [];
   const totalCount = pageData?.count ?? 0;
-  const pageCount = Math.max(1, Math.ceil(totalCount / pageSize));
+  const pageCount = showAll ? 1 : Math.max(1, Math.ceil(totalCount / pageSize));
   const blocked = listQuery.isFetching || del.isPending;
 
   const columns = React.useMemo(
@@ -68,12 +73,27 @@ export function AdminsListPage() {
       <div className="container mx-auto space-y-6">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Admins</h1>
+            <h1 className="text-2xl font-bold tracking-tight">
+              Admins {showAll && `(Showing All ${totalCount} Records)`}
+            </h1>
+            <p className="text-muted-foreground">
+              {showAll 
+                ? "All admin records are currently displayed" 
+                : `Showing ${rows.length} of ${totalCount} admins`
+              }
+            </p>
           </div>
 
           <div className="flex items-center gap-2">
+            <Button 
+              variant={showAll ? "default" : "outline"}
+              onClick={() => setShowAll(!showAll)}
+              size="sm"
+            >
+              {showAll ? "Show Paginated" : "Show All"}
+            </Button>
             <Button asChild>
-              <Link href="/admins/new/personal">Add Admin</Link>
+              <Link href="/admins/create?tab=personal">Add Admin</Link>
             </Button>
           </div>
         </div>
@@ -98,18 +118,22 @@ export function AdminsListPage() {
               </div>
             </div>
           }
-          pagination={{
-            pageIndex,
-            pageSize,
-            pageCount,
-            totalCount,
-            currentPage: pageData?.meta?.page,
-            onPageChange: setPageIndex,
-            onPageSizeChange: (n) => {
-              setPageSize(n);
-              setPageIndex(0);
-            },
-          }}
+          pagination={
+            showAll ? 
+            undefined :
+            {
+              pageIndex,
+              pageSize,
+              pageCount,
+              totalCount,
+              currentPage: pageData?.meta?.page,
+              onPageChange: setPageIndex,
+              onPageSizeChange: (n) => {
+                setPageSize(n);
+                setPageIndex(0);
+              },
+            }
+          }
           meta={{
             searchable: pageData?.meta?.searchable ?? [],
           }}

@@ -9,6 +9,7 @@ import { api } from "@/api";
 import { useAuthStore } from "@/lib/auth/store";
 import { Loader2, X, Image as ImageIcon, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Label } from "@radix-ui/react-label";
 
 type UploadResponse = {
   id: string;
@@ -271,7 +272,12 @@ export function ImagePickerField({
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <label className="text-sm font-medium">{title} {required ? <span className="text-destructive">*</span> : null}</label>
+        {title && (
+          <Label className="text-sm font-medium">
+            {title} {required ? <span className="text-destructive">*</span> : null}
+          </Label>
+        )}
+
         {busy && (
           <span className="flex items-center gap-1 text-xs text-muted-foreground">
             <Loader2 size={14} className="animate-spin" />

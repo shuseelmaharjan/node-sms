@@ -3,6 +3,7 @@
 import * as React from "react";
 import type { Control, FieldValues, Path } from "react-hook-form";
 import { Controller } from "react-hook-form";
+
 import {
   Select,
   SelectContent,
@@ -10,10 +11,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
 
 type Option = { value: string; label: string };
 
-export function RhfSelectField<T extends FieldValues>(props: {
+export function SelectField<T extends FieldValues>(props: {
   control: Control<T>;
   name: Path<T>;
   label: string;
@@ -22,23 +25,31 @@ export function RhfSelectField<T extends FieldValues>(props: {
   required?: boolean;
   disabled?: boolean;
 }) {
+  const id = React.useId();
+
   return (
     <Controller
       control={props.control}
       name={props.name}
       render={({ field, fieldState }) => (
-        <div className="space-y-1">
-          <label className="text-sm font-medium">
-            {props.label}{" "}
-            {props.required ? <span className="text-destructive">*</span> : null}
-          </label>
+        <div className="space-y-2">
+          <Label htmlFor={id} className="text-xs sm:text-sm font-medium">
+            {props.label}
+            {props.required ? <span className="text-destructive ml-0.5">*</span> : null}
+          </Label>
 
           <Select
-            value={field.value ?? ""}
-            onValueChange={field.onChange}
+            value={field.value ? String(field.value) : ""}
+            onValueChange={(v) => field.onChange(v || undefined)}
             disabled={props.disabled}
           >
-            <SelectTrigger className={fieldState.error ? "border-destructive w-full" : "w-full"}>
+            <SelectTrigger
+              id={id}
+              className={cn(
+                "w-full",
+                fieldState.error && "border-destructive focus-visible:ring-destructive/30"
+              )}
+            >
               <SelectValue placeholder={props.placeholder ?? `Select ${props.label}`} />
             </SelectTrigger>
 
@@ -52,7 +63,9 @@ export function RhfSelectField<T extends FieldValues>(props: {
           </Select>
 
           {fieldState.error?.message ? (
-            <p className="text-xs text-destructive">{fieldState.error.message}</p>
+            <p className="text-[11px] sm:text-xs font-medium text-destructive leading-snug">
+              {fieldState.error.message}
+            </p>
           ) : null}
         </div>
       )}

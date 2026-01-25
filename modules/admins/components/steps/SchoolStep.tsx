@@ -3,9 +3,9 @@
 import * as React from "react";
 import { Controller } from "react-hook-form";
 import { FormWizard } from "@/components/form/FormWizard";
-import { InputField } from "@/components/form/InputField";
+import { InputField } from "@/components/fields/InputField";
 import { ImagePickerField } from "@/components/form/ImagePickerField";
-import { SwitchField } from "@/components/form/SwitchField";
+import { SwitchField } from "@/components/fields/SwitchField";
 import { schoolInfoSchema, type SchoolInfoValues } from "../../schema/admin.schema";
 
 export function SchoolStep(props: {

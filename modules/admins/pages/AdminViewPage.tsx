@@ -38,7 +38,7 @@ export function AdminViewPage({ id }: { id: string }) {
             <Link href="/admins">Back</Link>
           </Button>
           <Button asChild>
-            <Link href={`/admins/${id}/edit/personal`}>Edit</Link>
+            <Link href={`/admins/create?tab=personal&userId=${id}`}>Edit</Link>
           </Button>
         </div>
       </div>
