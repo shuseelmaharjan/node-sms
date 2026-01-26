@@ -1,5 +1,5 @@
-import { OnboardingAdminCrudPage } from "@/modules/admins/components/onboarding-admin-crud-page";
+import { AdminsListPage } from "@/modules/admins/components/admins-list-page";
 
 export default function Page() {
-  return <OnboardingAdminCrudPage />;
+  return <AdminsListPage />;
 }
