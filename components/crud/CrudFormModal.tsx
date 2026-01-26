@@ -16,7 +16,6 @@ import {
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { X } from "lucide-react";
-import { DialogClose } from "@/components/ui/dialog";
 
 type CrudFormModalProps<S extends z.ZodObject<any, any>, Entity> = {
   open: boolean;
