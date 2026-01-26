@@ -85,6 +85,8 @@ export function NepalAddressFields<T extends FieldValues>({
   const [loadingDistrict, setLoadingDistrict] = React.useState(false);
   const [loadingMunicipality, setLoadingMunicipality] = React.useState(false);
 
+  const [initialLoadComplete, setInitialLoadComplete] = React.useState(false);
+
   // Load provinces once
   React.useEffect(() => {
     let alive = true;
@@ -107,13 +109,15 @@ export function NepalAddressFields<T extends FieldValues>({
   React.useEffect(() => {
     let alive = true;
 
-    // Clear dependent fields/options whenever province changes
-    setDistricts([]);
-    setMunicipalities([]);
-    setValue(districtPath, undefined as any, { shouldDirty: true, shouldValidate: false });
-    setValue(municipalityPath, undefined as any, { shouldDirty: true, shouldValidate: false });
-
-    if (!provinceValue) return;
+    if (!provinceValue) {
+      setDistricts([]);
+      setMunicipalities([]);
+      if (initialLoadComplete) {
+        setValue(districtPath, "" as any, { shouldDirty: true, shouldValidate: false });
+        setValue(municipalityPath, "" as any, { shouldDirty: true, shouldValidate: false });
+      }
+      return;
+    }
 
     (async () => {
       try {
@@ -121,6 +125,16 @@ export function NepalAddressFields<T extends FieldValues>({
         const data = await fetchDistricts(provinceValue);
         if (!alive) return;
         setDistricts(data);
+        
+        // Only clear district/municipality after initial load if they're incompatible
+        if (initialLoadComplete && districtValue) {
+          const districtExists = data.some(d => d.value === districtValue);
+          if (!districtExists) {
+            setValue(districtPath, "" as any, { shouldDirty: true, shouldValidate: false });
+            setValue(municipalityPath, "" as any, { shouldDirty: true, shouldValidate: false });
+            setMunicipalities([]);
+          }
+        }
       } finally {
         if (alive) setLoadingDistrict(false);
       }
@@ -136,10 +150,13 @@ export function NepalAddressFields<T extends FieldValues>({
   React.useEffect(() => {
     let alive = true;
 
-    setMunicipalities([]);
-    setValue(municipalityPath, undefined as any, { shouldDirty: true, shouldValidate: false });
-
-    if (!districtValue) return;
+    if (!districtValue) {
+      setMunicipalities([]);
+      if (initialLoadComplete) {
+        setValue(municipalityPath, "" as any, { shouldDirty: true, shouldValidate: false });
+      }
+      return;
+    }
 
     (async () => {
       try {
@@ -147,6 +164,22 @@ export function NepalAddressFields<T extends FieldValues>({
         const data = await fetchMunicipalities({ districtId: districtValue });
         if (!alive) return;
         setMunicipalities(data);
+        
+        // Mark initial load as complete after first municipality load
+        if (!initialLoadComplete) {
+          setInitialLoadComplete(true);
+        }
+        
+        // Only clear municipality after initial load if it's incompatible
+        if (initialLoadComplete) {
+          const municipalityValue = watch(municipalityPath) as unknown as string | undefined;
+          if (municipalityValue) {
+            const municipalityExists = data.some(m => m.value === municipalityValue);
+            if (!municipalityExists) {
+              setValue(municipalityPath, "" as any, { shouldDirty: true, shouldValidate: false });
+            }
+          }
+        }
       } finally {
         if (alive) setLoadingMunicipality(false);
       }
@@ -169,8 +202,26 @@ export function NepalAddressFields<T extends FieldValues>({
   const wardError = wardErrorMsg ? ({ message: wardErrorMsg } as any) : undefined;
   const toleError = toleErrorMsg ? ({ message: toleErrorMsg } as any) : undefined;
 
+  // Hidden field paths
+  const idPath = `${baseName}.id` as Path<T>;
+  const addressTypePath = `${baseName}.address_type` as Path<T>;
+  const countryPath = `${baseName}.country` as Path<T>;
+  const streetPath = `${baseName}.street` as Path<T>;
+  const houseNoPath = `${baseName}.house_no` as Path<T>;
+  const postalCodePath = `${baseName}.postal_code` as Path<T>;
+  const isPrimaryPath = `${baseName}.is_primary` as Path<T>;
+
   return (
     <div className="rounded-lg border p-3 space-y-3">
+      {/* Hidden fields to preserve data */}
+      <input type="hidden" {...register(idPath as any)} />
+      <input type="hidden" {...register(addressTypePath as any)} />
+      <input type="hidden" {...register(countryPath as any)} />
+      <input type="hidden" {...register(streetPath as any)} />
+      <input type="hidden" {...register(houseNoPath as any)} />
+      <input type="hidden" {...register(postalCodePath as any)} />
+      <input type="hidden" {...register(isPrimaryPath as any)} />
+
       <div className="flex items-center justify-between">
         <h3 className="font-medium">{title}</h3>
       </div>
@@ -186,7 +237,7 @@ export function NepalAddressFields<T extends FieldValues>({
               required
               disabled={disabled}
               value={field.value ? String(field.value) : ""}
-              onValueChange={(v) => field.onChange(v || undefined)}
+              onValueChange={(v) => field.onChange(v || "")}
               loading={loadingProvince}
               options={provinces}
               error={provinceError}
@@ -204,7 +255,7 @@ export function NepalAddressFields<T extends FieldValues>({
               required
               disabled={disabled || !provinceValue}
               value={field.value ? String(field.value) : ""}
-              onValueChange={(v) => field.onChange(v || undefined)}
+              onValueChange={(v) => field.onChange(v || "")}
               loading={loadingDistrict}
               options={districts}
               error={districtError}
@@ -223,7 +274,7 @@ export function NepalAddressFields<T extends FieldValues>({
               required
               disabled={disabled || !districtValue}
               value={field.value ? String(field.value) : ""}
-              onValueChange={(v) => field.onChange(v || undefined)}
+              onValueChange={(v) => field.onChange(v || "")}
               loading={loadingMunicipality}
               options={municipalities}
               error={municipalityError}
@@ -239,7 +290,7 @@ export function NepalAddressFields<T extends FieldValues>({
           disabled={disabled}
           inputMode="numeric"
           pattern="[0-9]*"
-          placeholder="e.g. 12"
+          placeholder="Ward No."
           error={wardError}
           {...register(wardPath as any, {
             onChange: (e) => {
@@ -254,7 +305,7 @@ export function NepalAddressFields<T extends FieldValues>({
           label="Tole"
           required
           disabled={disabled}
-          placeholder="e.g. Putalisadak"
+          placeholder="Tole"
           error={toleError}
           {...register(tolePath as any)}
         />

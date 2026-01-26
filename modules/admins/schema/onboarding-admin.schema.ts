@@ -40,6 +40,7 @@ const profileSchema = z.object({
 });
 
 const addressSchema = z.object({
+  id: z.string().optional(),
   address_type: z.enum(["permanent", "temporary"]),
   province: z.string().min(1, "Province is required"),
   district: z.string().min(1, "District is required"),
@@ -57,14 +58,9 @@ const documentsSchema = z.object({
   photo_file: z.string().min(1, "Photo is required"),
 
   citizenship_front_file: z.string().min(1, "Citizenship (front) is required"),
-  citizenship_front_remarks: z.string().optional().default(""),
-
   citizenship_back_file: z.string().min(1, "Citizenship (back) is required"),
-  citizenship_back_remarks: z.string().optional().default(""),
 
   pan_file: z.string().min(1, "PAN file is required"),
-  pan_issued_by: z.string().optional().default(""),
-  pan_issued_date: z.string().optional().default(""),
 
   signature_file: z.string().min(1, "Signature is required"),
 });

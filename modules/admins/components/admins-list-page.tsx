@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   keepPreviousData,
@@ -11,13 +10,11 @@ import {
 } from "@tanstack/react-query";
 import type { SortingState } from "@tanstack/react-table";
 import { toast } from "sonner";
-import { RefreshCw, Plus, Search } from "lucide-react";
+import { RefreshCw, Filter } from "lucide-react";
 
 import { api } from "@/api";
 import { DataTable } from "@/components/data-table/DataTable";
 import { ConfirmDeleteDialog } from "@/components/crud/ConfirmDeleteDialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import type { PaginatedResponse } from "@/types/api";
 import { PageShell } from "@/components/layout/PageShell";
 
@@ -25,6 +22,9 @@ import {
   onboardingAdminColumns,
   type OnboardingAdminEntity,
 } from "../columns/onboarding-admin.columns";
+
+// Optional helper for "Add" (link OR modal)
+import { AddActionButton, type AddAction } from "@/components/data-table/AddActionButton";
 
 const LIST_URL = "/api/onboarding/admin/";
 const DETAIL_URL = (id: string) => `/api/onboarding/admin/${id}/`;
@@ -42,6 +42,7 @@ export function AdminsListPage() {
     React.useState<OnboardingAdminEntity | null>(null);
 
   const [q, setQ] = React.useState("");
+  const [statusFilter, setStatusFilter] = React.useState<string>("active");
   const [pageIndex, setPageIndex] = React.useState(0);
   const [pageSize, setPageSize] = React.useState(10);
 
@@ -54,7 +55,7 @@ export function AdminsListPage() {
   const ordering = React.useMemo(() => toOrdering(sorting), [sorting]);
 
   const listQuery = useQuery<PaginatedResponse<OnboardingAdminEntity>>({
-    queryKey: ["onboarding-admin", "list", { pageIndex, pageSize, q, ordering }],
+    queryKey: ["onboarding-admin", "list", { pageIndex, pageSize, q, ordering, statusFilter }],
     queryFn: async () => {
       const res = await api.get<PaginatedResponse<OnboardingAdminEntity>>(LIST_URL, {
         params: {
@@ -62,6 +63,7 @@ export function AdminsListPage() {
           page_size: pageSize,
           search: q || undefined,
           ordering: ordering || undefined,
+          status_filter: statusFilter || undefined,
         },
       });
       return res.data;
@@ -104,49 +106,28 @@ export function AdminsListPage() {
   const columns = React.useMemo(
     () =>
       onboardingAdminColumns({
-        onEdit: (row) => router.push(`/admins/update/${row.user.id}`),
+        onEdit: (row) => router.push(`/admins/update-record?user_id=${row.user.id}`),
         onDelete: (row) => setDeleteTarget(row),
       }),
     [router]
   );
 
+  const searchable = pageData?.meta?.searchable ?? [];
+  const searchEnabled = searchable.length > 0;
+
+  const addAction: AddAction = {
+    kind: "link",
+    href: "/admins/add-record",
+    label: "Add Admin",
+  };
+
+  // Example for modal instead:
+  // const [open, setOpen] = React.useState(false);
+  // const addAction: AddAction = { kind: "modal", onClick: () => setOpen(true), label: "Add" };
+
   return (
     <>
-      <PageShell
-        title="Admins"
-        description="Manage admin onboardings."
-        actions={
-          <div className="flex gap-2">
-            <Button asChild>
-              <Link href="/admins/add">
-                <Plus className="mr-2 h-4 w-4" />
-                Add
-              </Link>
-            </Button>
-
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => qc.invalidateQueries({ queryKey: ["onboarding-admin", "list"] })}
-              disabled={blocked}
-            >
-              <RefreshCw className="h-4 w-4" />
-            </Button>
-          </div>
-        }
-      >
-        <div className="mb-3 flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <div className="relative w-full sm:w-72">
-            <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder="Search (name/email/phone/username)…"
-              className="pl-8"
-            />
-          </div>
-        </div>
-
+      <PageShell title="Admins" description="Manage admin onboardings.">
         <DataTable<OnboardingAdminEntity>
           data={rows}
           columns={columns}
@@ -168,9 +149,50 @@ export function AdminsListPage() {
             },
           }}
           meta={{
-            searchable: pageData?.meta?.searchable ?? [],
+            searchable,
+            search_param: pageData?.meta?.search_param,
+            // filterable: pageData?.meta?.filterable,
+            // sortable: pageData?.meta?.sortable,
+          }}
+          toolbar={{
+            search: {
+              value: q,
+              onChange: setQ,
+              enabled: searchEnabled,
+              placeholder: "Search",
+            },
+            filters: {
+              status_filter: {
+                value: statusFilter,
+                onChange: setStatusFilter,
+                options: [
+                  { value: "active", label: "Active" },
+                  { value: "deactive", label: "Deactive" },
+                  { value: "all", label: "All" },
+                ],
+                placeholder: "Filter by status",
+                label: "Status",
+                icon: <Filter className="h-4 w-4" />,
+              },
+            },
+            actions: (
+              <>
+                {/* Page-specific actions: Add/Download/etc. */}
+                <AddActionButton add={addAction} />
+              </>
+            ),
+          }}
+          refresh={{
+            onClick: () =>
+              qc.invalidateQueries({ queryKey: ["onboarding-admin", "list"] }),
+            disabled: blocked,
+            icon: <RefreshCw className="h-4 w-4" />,
+            title: "Refresh list",
           }}
         />
+
+        {/* If you used modal Add, render the modal here */}
+        {/* <AddAdminDialog open={open} onOpenChange={setOpen} /> */}
       </PageShell>
 
       <ConfirmDeleteDialog

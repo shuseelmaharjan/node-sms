@@ -24,7 +24,7 @@ export function NepaliBsDatePickerField<T extends FieldValues>({
   label,
   disabled,
   placeholder = "YYYY-MM-DD (BS)",
-  hint = "Pick a date (BS)",
+  hint = "",
   required = false,
   theme = "primary",
 }: Props<T>) {

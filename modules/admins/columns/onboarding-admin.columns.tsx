@@ -98,50 +98,110 @@ export function onboardingAdminColumns(args: {
       header: "#",
       enableSorting: false,
       cell: ({ row }) => (
-        <span className="tabular-nums">{row.original.serial ?? "-"}</span>
+        <span className="tabular-nums">{row.original.serial ?? "-"}.</span>
       ),
     },
     {
-      id: "name",
+      id: "first_name",
       header: "Name",
-      enableSorting: false,
+      enableSorting: true,
+      accessorFn: (row) => row.user.first_name,
       cell: ({ row }) => {
         const u = row.original.user;
         const full = [u.first_name, u.middle_name, u.last_name]
           .filter(Boolean)
           .join(" ");
-        return <span className="font-medium">{full}</span>;
+        return <span className="flex flex-col gap-1">
+          <span className="font-medium">{full}</span>
+          <span>{row.original.user.phone}</span>
+        </span>;
       },
     },
+
     {
-      accessorKey: "user.email",
+      id: "email",
       header: "Email",
-      enableSorting: true, // maps to ordering=email in page component
+      enableSorting: true,
+      accessorFn: (row) => row.user.email,
       cell: ({ row }) => row.original.user.email,
     },
     {
-      id: "phone",
-      header: "Phone",
-      enableSorting: false,
-      cell: ({ row }) => row.original.user.phone ?? "-",
-    },
-    {
-      id: "school",
-      header: "School",
-      enableSorting: false,
-      cell: ({ row }) => row.original.school?.name ?? "-",
-    },
-    {
-      id: "status",
+      accessorKey: "user.status",
       header: "Status",
       enableSorting: false,
       cell: ({ row }) => {
         const v = (row.original.user.status ?? "").toLowerCase();
         const isActive = v === "active";
         return (
-          <Badge variant={isActive ? "default" : "secondary"}>
+          <Badge variant={isActive ? "active" : "inactive"}>
             {row.original.user.status ?? "-"}
           </Badge>
+        );
+      },
+    },
+    {
+      accessorKey: "user.username",
+      header: "Username",
+      enableSorting: false,
+      cell: ({ row }) => {
+        return(
+          <span className="flex flex-col gap-1">
+            <span className="font-mono">{row.original.user.username ?? "-"}</span>
+              {/* <span>{row.original.user.role ?? "-"}</span> */}
+              <Badge variant={row.original.user.role ? row.original.user.role.toLowerCase() as any : "other"}>
+                {row.original.user.role ?? "-"}
+              </Badge>
+          </span>
+        )
+      },
+    },
+    {
+      accessorKey: "school.name",
+      header: "School Name",
+      enableSorting: false,
+      cell: ({ row }) => {
+        return(
+          <span className="flex flex-col gap-1">
+            <span className="font-medium">{row.original.school?.name ?? "-"}</span>
+            <span>{row.original.school?.code ?? "-"}</span>
+          </span>
+        )
+      },
+    },
+    {
+      accessorKey: "school.address",
+      header: "School Address",
+      enableSorting: false,
+      cell: ({ row }) => row.original.school?.address ?? "-",
+    },
+    {
+      accessorKey: "school.email",
+      header: "School Email",
+      enableSorting: false,
+      cell: ({ row }) => {
+        return(
+          <span className="flex flex-col gap-1">
+            <span>{row.original.school?.email ?? "-"}</span>
+            <span>{row.original.school?.phone ?? "-"}</span>
+          </span>
+        )
+      },
+    },
+    {
+      id: "school_logo",
+      header: "School Logo",
+      enableSorting: false,
+      cell: ({ row }) => {
+        const logoUrl = row.original.school?.logo_file?.file_url;
+        return logoUrl ? (
+          <img
+              src={logoUrl}
+              alt="School Logo"
+              className="h-10 w-10 rounded object-cover border"
+              loading="lazy"
+            />
+        ) : (
+          "-"
         );
       },
     },
