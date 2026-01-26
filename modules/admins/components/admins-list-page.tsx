@@ -106,7 +106,7 @@ export function AdminsListPage() {
   const columns = React.useMemo(
     () =>
       onboardingAdminColumns({
-        onEdit: (row) => router.push(`/admins/update/${row.user.id}`),
+        onEdit: (row) => router.push(`/admins/update-record?user_id=${row.user.id}`),
         onDelete: (row) => setDeleteTarget(row),
       }),
     [router]
@@ -117,7 +117,7 @@ export function AdminsListPage() {
 
   const addAction: AddAction = {
     kind: "link",
-    href: "/admins/add",
+    href: "/admins/add-record",
     label: "Add Admin",
   };
 

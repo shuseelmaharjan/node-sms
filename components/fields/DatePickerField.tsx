@@ -44,9 +44,9 @@ export function DatePickerField<T extends FieldValues>({
 
         return (
           <div className="space-y-2">
-            <Label htmlFor={id}>
+            <Label htmlFor={id} className="text-xs sm:text-sm font-medium">
               {label}
-              {required && <span className="text-destructive ml-1">*</span>}
+              {required && <span className="text-destructive ml-0.5">*</span>}
             </Label>
             <Popover>
               <PopoverTrigger asChild>
@@ -82,8 +82,14 @@ export function DatePickerField<T extends FieldValues>({
                 />
               </PopoverContent>
             </Popover>
-            {hasError && fieldState.error?.message && (
-              <p className="text-sm text-destructive">{fieldState.error.message}</p>
+            {hasError && fieldState.error?.message ? (
+              <p className="text-[11px] sm:text-xs font-medium text-destructive leading-snug">
+                {fieldState.error.message}
+              </p>
+            ) : (
+              <p className="text-[11px] sm:text-xs text-muted-foreground leading-snug invisible">
+                &nbsp;
+              </p>
             )}
           </div>
         );

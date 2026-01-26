@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { Controller } from "react-hook-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -229,9 +229,9 @@ function toPayload(values: OnboardingAdminValues) {
 
 export function AdminsFormPage(props: { mode: "create" | "edit" }) {
   const router = useRouter();
-  const params = useParams();
+  const searchParams = useSearchParams();
 
-  const id = props.mode === "edit" ? String((params as any).id ?? "") : "";
+  const id = props.mode === "edit" ? (searchParams.get("user_id") || "") : "";
 
   const qc = useQueryClient();
 
