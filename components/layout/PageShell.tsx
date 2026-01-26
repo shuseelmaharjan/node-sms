@@ -23,7 +23,7 @@ export function PageShell(props: {
         {props.actions ? <div className="shrink-0">{props.actions}</div> : null}
       </div>
 
-      <div className="rounded-lg border bg-card p-4">{props.children}</div>
+      <div>{props.children}</div>
     </div>
   );
 }

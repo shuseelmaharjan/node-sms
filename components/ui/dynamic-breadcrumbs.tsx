@@ -3,7 +3,7 @@
 import { usePathname } from "next/navigation";
 import { Fragment, useMemo } from "react";
 import Link from "next/link";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Home } from "lucide-react";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -79,8 +79,20 @@ function formatSegmentLabel(segment: string): string {
 }
 
 function generateBreadcrumbs(pathname: string): BreadcrumbSegment[] {
+  // If we're on /overview, don't show breadcrumbs (it's the home page)
+  if (pathname === '/overview') {
+    return [];
+  }
+
   const segments = pathname.split('/').filter(Boolean);
   const breadcrumbs: BreadcrumbSegment[] = [];
+
+  // Always add Home as the first breadcrumb pointing to /overview
+  breadcrumbs.push({
+    label: 'Home',
+    href: '/overview',
+    icon: <Home className="h-4 w-4" />,
+  });
 
   // Build breadcrumb path progressively
   let currentPath = '';
@@ -95,7 +107,7 @@ function generateBreadcrumbs(pathname: string): BreadcrumbSegment[] {
     breadcrumbs.push({
       label: config?.label || formatSegmentLabel(segment),
       href: isLast ? undefined : currentPath,
-      icon: config?.icon && index === 0 ? config.icon : undefined,
+      // No icon for non-home breadcrumbs
     });
   });
 
@@ -187,10 +199,12 @@ export function DynamicBreadcrumbs({
                           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
                         )}
                       >
-                        {/* On mobile, show only icon for first crumb; on sm+ show label */}
-                        {index === 0 && crumb.icon ? (
+                        {/* Show icon only for Home (first item) */}
+                        {crumb.icon ? (
                           <>
+                            {/* Mobile: icon only */}
                             <span className="sm:hidden">{crumb.icon}</span>
+                            {/* Desktop: icon + label */}
                             <span className="hidden sm:inline-flex items-center gap-1.5">
                               {crumb.icon}
                               {crumb.label}
@@ -210,7 +224,7 @@ export function DynamicBreadcrumbs({
                           "max-w-[22ch] truncate"
                         )}
                       >
-                        {index === 0 ? crumb.icon : null}
+                        {/* Don't show icon for current page, only for Home link */}
                         <span className="truncate">{crumb.label}</span>
                       </BreadcrumbPage>
                     )}

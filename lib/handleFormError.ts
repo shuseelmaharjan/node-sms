@@ -14,6 +14,47 @@ function asFieldBag(data: any) {
   return null;
 }
 
+/**
+ * Recursively process nested field errors from Django
+ * e.g., { school: { phone: ["error"] } } -> "school.phone"
+ */
+function processNestedErrors<T extends FieldValues>(
+  obj: any,
+  setError: UseFormSetError<T>,
+  prefix: string = ""
+): boolean {
+  let didSetAny = false;
+
+  for (const [key, value] of Object.entries(obj)) {
+    // Skip special keys
+    if (key === "detail" || key === "message") continue;
+
+    const fieldPath = prefix ? `${prefix}.${key}` : key;
+
+    // Handle non_field_errors specially
+    if (key === "non_field_errors" && Array.isArray(value) && value.length) {
+      const rootPath = prefix || "root";
+      setError(rootPath as Path<T>, { message: String(value[0]) });
+      didSetAny = true;
+      continue;
+    }
+
+    // If value is an array, it's a field error
+    if (Array.isArray(value) && value.length) {
+      const msg = String(value[0]);
+      setError(fieldPath as Path<T>, { message: msg });
+      didSetAny = true;
+    }
+    // If value is an object, recurse into it
+    else if (value && typeof value === "object" && !Array.isArray(value)) {
+      const nested = processNestedErrors(value, setError, fieldPath);
+      didSetAny = didSetAny || nested;
+    }
+  }
+
+  return didSetAny;
+}
+
 export function handleFormError<T extends FieldValues>(
   error: unknown,
   options?: FormErrorOptions<T>
@@ -30,25 +71,21 @@ export function handleFormError<T extends FieldValues>(
 
   // Try field-level mapping for 400/422
   if ((status === 400 || status === 422) && fieldBag && options?.setError) {
-    let didSetAny = false;
+    const didSetAny = processNestedErrors(fieldBag, options.setError);
 
-    for (const [field, v] of Object.entries(fieldBag)) {
-      if (field === "detail" || field === "message" || field === "non_field_errors") continue;
-
-      const msg = Array.isArray(v) ? String(v[0]) : String(v);
-      options.setError(field as Path<T>, { message: msg });
-      didSetAny = true;
+    if (didSetAny) {
+      // Don't show toast here - ToastInterceptor already handles it
+      // Field errors are now displayed under each field
+      return;
     }
-
-    // Non-field errors
-    if (Array.isArray(fieldBag?.non_field_errors) && fieldBag.non_field_errors.length) {
-      options.setError("root" as Path<T>, { message: String(fieldBag.non_field_errors[0]) });
-      didSetAny = true;
-    }
-
-    if (didSetAny) return;
   }
 
-  // fallback toast
-  options?.toast?.(data?.detail || data?.message || "Something went wrong");
+  // fallback toast - only for non-field errors
+  // (ToastInterceptor handles most cases, this is backup)
+  if (data?.detail || data?.message) {
+    // Skip toast if interceptor already handled it
+    return;
+  }
+  
+  options?.toast?.("Something went wrong");
 }

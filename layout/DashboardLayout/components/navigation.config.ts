@@ -45,7 +45,6 @@ export const navconfig: NavItem[] = [
     label: "Admins",
     icon: Users,
     href: "/admins",
-    exactMatch: true,
   },
   {
     label: "Organizations",

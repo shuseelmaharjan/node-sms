@@ -39,6 +39,12 @@ export class ToastInterceptor {
     const data = error.response?.data;
     
     let message: string;
+    let firstFieldError: string | null = null;
+
+    // Try to extract first field validation error from nested objects
+    if (data && typeof data === 'object' && (status === 400 || status === 422)) {
+      firstFieldError = this.extractFirstFieldError(data);
+    }
 
     // Extract error message from various response formats
     if (data?.message) {
@@ -47,6 +53,8 @@ export class ToastInterceptor {
       message = data.non_field_errors[0];
     } else if (data?.detail) {
       message = data.detail;
+    } else if (firstFieldError) {
+      message = firstFieldError;
     } else if (typeof data === 'string') {
       message = data;
     } else {
@@ -92,6 +100,42 @@ export class ToastInterceptor {
     }
 
     return Promise.reject(error);
+  }
+
+  /**
+   * Recursively extract the first field error from nested validation response
+   * e.g., { school: { phone: ["error message"] } } -> "School phone: error message"
+   */
+  private static extractFirstFieldError(obj: any, parentKey: string = ""): string | null {
+    for (const [key, value] of Object.entries(obj)) {
+      // Skip special keys
+      if (key === "detail" || key === "message" || key === "success") continue;
+
+      const fieldLabel = parentKey ? `${this.formatFieldName(parentKey)} ${this.formatFieldName(key)}` : this.formatFieldName(key);
+
+      // If value is an array with error messages
+      if (Array.isArray(value) && value.length > 0) {
+        return `${fieldLabel}: ${value[0]}`;
+      }
+
+      // If value is an object, recurse
+      if (value && typeof value === "object" && !Array.isArray(value)) {
+        const nested = this.extractFirstFieldError(value, key);
+        if (nested) return nested;
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * Format field name for display (snake_case -> Title Case)
+   */
+  private static formatFieldName(field: string): string {
+    return field
+      .split("_")
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
   }
 
   /**
