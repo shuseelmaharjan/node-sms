@@ -185,3 +185,10 @@
 .ndp-nepali-calendar .today {
   outline: 2px solid hsl(var(--primary))!important;
 }
+.rdp-caption,
+.rdp-caption_dropdowns,
+.rdp-caption_label,
+.rdp-nav {
+  display: none !important;
+}
+

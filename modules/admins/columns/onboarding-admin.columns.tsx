@@ -5,6 +5,7 @@ import * as React from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { RenderImage } from "@/components/ui/render-image";
 
 export type FileEntity = {
   id: string;
@@ -112,7 +113,7 @@ export function onboardingAdminColumns(args: {
           .filter(Boolean)
           .join(" ");
         return <span className="flex flex-col gap-1">
-          <span className="font-medium">{full}</span>
+          <span className="font-medium max-w-[150px] truncate">{full}</span>
           <span>{row.original.user.phone}</span>
         </span>;
       },
@@ -123,7 +124,14 @@ export function onboardingAdminColumns(args: {
       header: "Email",
       enableSorting: true,
       accessorFn: (row) => row.user.email,
-      cell: ({ row }) => row.original.user.email,
+      cell: ({ row }) => (
+        <div
+          className="max-w-[200px] truncate"
+          title={row.original.user.email}
+        >
+          {row.original.user.email}
+        </div>
+      ),
     },
     {
       accessorKey: "user.status",
@@ -144,13 +152,13 @@ export function onboardingAdminColumns(args: {
       header: "Username",
       enableSorting: false,
       cell: ({ row }) => {
-        return(
+        return (
           <span className="flex flex-col gap-1">
             <span className="font-mono">{row.original.user.username ?? "-"}</span>
-              {/* <span>{row.original.user.role ?? "-"}</span> */}
-              <Badge variant={row.original.user.role ? row.original.user.role.toLowerCase() as any : "other"}>
-                {row.original.user.role ?? "-"}
-              </Badge>
+            {/* <span>{row.original.user.role ?? "-"}</span> */}
+            <Badge variant={row.original.user.role ? row.original.user.role.toLowerCase() as any : "other"}>
+              {row.original.user.role ?? "-"}
+            </Badge>
           </span>
         )
       },
@@ -160,9 +168,9 @@ export function onboardingAdminColumns(args: {
       header: "School Name",
       enableSorting: false,
       cell: ({ row }) => {
-        return(
+        return (
           <span className="flex flex-col gap-1">
-            <span className="font-medium">{row.original.school?.name ?? "-"}</span>
+            <span className="font-medium max-w-[200px] truncate">{row.original.school?.name ?? "-"}</span>
             <span>{row.original.school?.code ?? "-"}</span>
           </span>
         )
@@ -172,16 +180,24 @@ export function onboardingAdminColumns(args: {
       accessorKey: "school.address",
       header: "School Address",
       enableSorting: false,
-      cell: ({ row }) => row.original.school?.address ?? "-",
+      cell: ({ row }) => (
+        <div
+          className="max-w-[200px] truncate"
+          title={row.original.school?.address}
+        >
+          {row.original.school?.address ?? "-"}
+        </div>
+      ),
     },
+
     {
       accessorKey: "school.email",
       header: "School Email",
       enableSorting: false,
       cell: ({ row }) => {
-        return(
+        return (
           <span className="flex flex-col gap-1">
-            <span>{row.original.school?.email ?? "-"}</span>
+            <span className="max-w-[200px] truncate">{row.original.school?.email ?? "-"}</span>
             <span>{row.original.school?.phone ?? "-"}</span>
           </span>
         )
@@ -193,15 +209,15 @@ export function onboardingAdminColumns(args: {
       enableSorting: false,
       cell: ({ row }) => {
         const logoUrl = row.original.school?.logo_file?.file_url;
-        return logoUrl ? (
-          <img
+        return (
+          <div className="flex justify-center">
+            <RenderImage
               src={logoUrl}
-              alt="School Logo"
-              className="h-10 w-10 rounded object-cover border"
-              loading="lazy"
+              alt={row.original.school?.name ?? "School Logo"}
+              size={40}
+              className="border"
             />
-        ) : (
-          "-"
+          </div>
         );
       },
     },

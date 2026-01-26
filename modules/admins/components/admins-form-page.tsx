@@ -356,7 +356,7 @@ export function AdminsFormPage(props: { mode: "create" | "edit" }) {
           // Watch for date changes and synchronize BS <-> AD
           const bsDate = methods.watch("profile.date_of_birth_bs");
           const adDate = methods.watch("profile.date_of_birth_ad");
-          
+
           React.useEffect(() => {
             // Convert BS to AD when BS date changes
             if (bsDate && bsDate.length === 10) {
@@ -365,11 +365,11 @@ export function AdminsFormPage(props: { mode: "create" | "edit" }) {
                 const nepaliDate = new NepaliDate(year, month - 1, day);
                 const englishDate = nepaliDate.toJsDate();
                 const formatted = format(englishDate, "yyyy-MM-dd");
-                
+
                 if (adDate !== formatted) {
-                  methods.setValue("profile.date_of_birth_ad", formatted, { 
+                  methods.setValue("profile.date_of_birth_ad", formatted, {
                     shouldValidate: false,
-                    shouldDirty: true 
+                    shouldDirty: true
                   });
                 }
               } catch (error) {
@@ -385,11 +385,11 @@ export function AdminsFormPage(props: { mode: "create" | "edit" }) {
                 const englishDate = new Date(adDate);
                 const nepaliDate = new NepaliDate(englishDate);
                 const formatted = nepaliDate.format("YYYY-MM-DD");
-                
+
                 if (bsDate !== formatted) {
-                  methods.setValue("profile.date_of_birth_bs", formatted, { 
+                  methods.setValue("profile.date_of_birth_bs", formatted, {
                     shouldValidate: false,
-                    shouldDirty: true 
+                    shouldDirty: true
                   });
                 }
               } catch (error) {
@@ -399,297 +399,299 @@ export function AdminsFormPage(props: { mode: "create" | "edit" }) {
           }, [adDate]);
 
           return (
-          <div className="space-y-6">
-            {/* USER */}
-            <div className="rounded-lg border p-4 space-y-4">
-              <div className="font-medium">User Information</div>
-
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                <InputField
-                  label="First name"
-                  required
-                  placeholder="First Name"
-                  disabled={blocked}
-                  {...methods.register("user.first_name")}
-                  error={methods.formState.errors.user?.first_name as any}
-                />
-                <InputField
-                  label="Middle name"
-                  placeholder="Middle Name"
-                  disabled={blocked}
-                  {...methods.register("user.middle_name")}
-                  error={methods.formState.errors.user?.middle_name as any}
-                />
-                <InputField
-                  label="Last name"
-                  placeholder="Last Name"
-                  required
-                  disabled={blocked}
-                  {...methods.register("user.last_name")}
-                  error={methods.formState.errors.user?.last_name as any}
-                />
-
-                <InputField
-                  label="Phone"
-                  required
-                  disabled={blocked}
-                  placeholder="Phone number"
-                  {...methods.register("user.phone")}
-                  error={methods.formState.errors.user?.phone as any}
-                />
-                <InputField
-                  label="Email"
-                  required
-                  disabled={blocked}
-                  placeholder="name@domain.com"
-                  {...methods.register("user.email")}
-                  error={methods.formState.errors.user?.email as any}
-                />
-              </div>
-            </div>
-
-            {/* SCHOOL */}
-            <div className="rounded-lg border p-4 space-y-4">
-              <div className="font-medium">School Information</div>
-
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <InputField label="Code" required disabled={blocked} placeholder="School Code" {...methods.register("school.code")}
-                  error={methods.formState.errors.school?.code as any} />
-                <InputField label="Name" required disabled={blocked} placeholder="School Name" {...methods.register("school.name")}
-                  error={methods.formState.errors.school?.name as any} />
-                <InputField label="Address" required disabled={blocked} placeholder="School Address" {...methods.register("school.address")}
-                  error={methods.formState.errors.school?.address as any} />
-                <InputField label="Phone" required disabled={blocked} placeholder="School Phone" {...methods.register("school.phone")}
-                  error={methods.formState.errors.school?.phone as any} />
-                <InputField label="Email" required disabled={blocked} placeholder="School Email" {...methods.register("school.email")}
-                  error={methods.formState.errors.school?.email as any} />
-                <InputField label="PAN number" required disabled={blocked} placeholder="School PAN Number" {...methods.register("school.pan_number")}
-                  error={methods.formState.errors.school?.pan_number as any} />
-                <InputField label="Registration number" required disabled={blocked} placeholder="School Registration Number" {...methods.register("school.registration_number")}
-                  error={methods.formState.errors.school?.registration_number as any} />
-              </div>
-
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                <Controller
-                  control={methods.control}
-                  name="school.logo_file"
-                  render={({ field, fieldState }) => (
-                    <ImagePickerField
-                      title="Logo"
-                      required
-                      value={field.value || null}
-                      initialUri={initialUrls.school_logo}
-                      onChange={(id) => field.onChange(id)}
-                      error={fieldState.error as any}
-                      onUploadStatusChange={(busy) => setBusy("school_logo", busy)}
-                    />
-                  )}
-                />
-                <Controller
-                  control={methods.control}
-                  name="school.pan_document_file"
-                  render={({ field, fieldState }) => (
-                    <ImagePickerField
-                      title="PAN Document"
-                      required
-                      value={field.value || null}
-                      initialUri={initialUrls.school_pan_doc}
-                      onChange={(id) => field.onChange(id)}
-                      error={fieldState.error as any}
-                      onUploadStatusChange={(busy) => setBusy("school_pan_doc", busy)}
-                    />
-                  )}
-                />
-                <Controller
-                  control={methods.control}
-                  name="school.registration_document_file"
-                  render={({ field, fieldState }) => (
-                    <ImagePickerField
-                      title="Registration Document"
-                      required
-                      value={field.value || null}
-                      initialUri={initialUrls.school_reg_doc}
-                      onChange={(id) => field.onChange(id)}
-                      error={fieldState.error as any}
-                      onUploadStatusChange={(busy) => setBusy("school_reg_doc", busy)}
-                    />
-                  )}
-                />
-              </div>
-            </div>
-
-            {/* PROFILE */}
-            <div className="rounded-lg border p-4 space-y-4">
-              <div className="font-medium">Profile Information</div>
-
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-
-                <Controller
-                  control={methods.control}
-                  name="profile.date_of_birth_bs"
-                  render={({ field }) => (
-                    <NepaliBsDatePickerField
-                      control={methods.control}
-                      name={"profile.date_of_birth_bs" as any}
-                      label="Date of birth (BS)"
-                      disabled={blocked}
-                      required={true}
-                    />
-                  )}
-                />
-
-                <Controller
-                  control={methods.control}
-                  name="profile.date_of_birth_ad"
-                  render={({ field }) => (
-                    <DatePickerField
-                      control={methods.control}
-                      name={"profile.date_of_birth_ad" as any}
-                      label="Date of birth (AD)"
-                      disabled={blocked}
-                      required={true}
-                    />
-                  )}
-                />
-
-
-                <GenderSelectField control={methods.control} name={"profile.gender" as any} required disabled={blocked} />
-                <BloodGroupSelectField control={methods.control} name={"profile.blood_group" as any} required disabled={blocked} />
-                <NationalitySelectField control={methods.control} name={"profile.nationality" as any} required disabled={blocked} />
-                <ReligionSelectField control={methods.control} name={"profile.religion" as any} required disabled={blocked} />
-                <MotherTongueSelectField control={methods.control} name={"profile.mother_tongue" as any} required disabled={blocked} />
-
-                <InputField
-                  label="Citizenship no"
-                  required
-                  placeholder="Citizenship no"
-                  disabled={blocked}
-                  {...methods.register("profile.citizenship_no")}
-                  error={methods.formState.errors.profile?.citizenship_no as any}
-                />
-                <InputField
-                  label="PAN no"
-                  placeholder="Pan no"
-                  required
-                  disabled={blocked}
-                  {...methods.register("profile.pan_no")}
-                  error={methods.formState.errors.profile?.pan_no as any}
-                />
-              </div>
-            </div>
-
-            {/* ADDRESSES */}
             <div className="space-y-6">
+              {/* USER */}
+              <div className="rounded-lg border p-4 space-y-4">
+                <div className="font-medium">User Information</div>
 
-              <NepalAddressFields
-                title="Permanent Address"
-                control={methods.control}
-                register={methods.register}
-                setValue={methods.setValue}
-                watch={methods.watch}
-                errors={methods.formState.errors}
-                disabled={blocked}
-                baseName={"addresses.0" as any}
-              />
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                  <InputField
+                    label="First name"
+                    required
+                    placeholder="First Name"
+                    disabled={blocked}
+                    {...methods.register("user.first_name")}
+                    error={methods.formState.errors.user?.first_name as any}
+                  />
+                  <InputField
+                    label="Middle name"
+                    placeholder="Middle Name"
+                    disabled={blocked}
+                    {...methods.register("user.middle_name")}
+                    error={methods.formState.errors.user?.middle_name as any}
+                  />
+                  <InputField
+                    label="Last name"
+                    placeholder="Last Name"
+                    required
+                    disabled={blocked}
+                    {...methods.register("user.last_name")}
+                    error={methods.formState.errors.user?.last_name as any}
+                  />
 
-              <NepalAddressFields
-                title="Temporary Address"
-                control={methods.control}
-                register={methods.register}
-                setValue={methods.setValue}
-                watch={methods.watch}
-                errors={methods.formState.errors}
-                disabled={blocked}
-                baseName={"addresses.1" as any}
-              />
-            </div>
+                  <InputField
+                    label="Phone"
+                    required
+                    disabled={blocked}
+                    placeholder="Phone number"
+                    {...methods.register("user.phone")}
+                    error={methods.formState.errors.user?.phone as any}
+                  />
+                  <InputField
+                    label="Email"
+                    required
+                    disabled={blocked}
+                    placeholder="name@domain.com"
+                    {...methods.register("user.email")}
+                    error={methods.formState.errors.user?.email as any}
+                  />
+                </div>
+              </div>
 
-            {/* DOCUMENTS */}
-            <div className="rounded-lg border p-4 space-y-4">
-              <div className="font-medium">Documents</div>
+              {/* SCHOOL */}
+              <div className="rounded-lg border p-4 space-y-4">
+                <div className="font-medium">School Information</div>
 
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                <Controller
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <InputField label="Code" required disabled={blocked} placeholder="School Code" {...methods.register("school.code")}
+                    error={methods.formState.errors.school?.code as any} />
+                  <InputField label="Name" required disabled={blocked} placeholder="School Name" {...methods.register("school.name")}
+                    error={methods.formState.errors.school?.name as any} />
+                  <InputField label="Address" required disabled={blocked} placeholder="School Address" {...methods.register("school.address")}
+                    error={methods.formState.errors.school?.address as any} />
+                  <InputField label="Phone" required disabled={blocked} placeholder="School Phone" {...methods.register("school.phone")}
+                    error={methods.formState.errors.school?.phone as any} />
+                  <InputField label="Email" required disabled={blocked} placeholder="School Email" {...methods.register("school.email")}
+                    error={methods.formState.errors.school?.email as any} />
+                  <InputField label="PAN number" required disabled={blocked} placeholder="School PAN Number" {...methods.register("school.pan_number")}
+                    error={methods.formState.errors.school?.pan_number as any} />
+                  <InputField label="Registration number" required disabled={blocked} placeholder="School Registration Number" {...methods.register("school.registration_number")}
+                    error={methods.formState.errors.school?.registration_number as any} />
+                </div>
+
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                  <Controller
+                    control={methods.control}
+                    name="school.logo_file"
+                    render={({ field, fieldState }) => (
+                      <ImagePickerField
+                        title="Logo"
+                        required
+                        value={field.value || null}
+                        initialUri={initialUrls.school_logo}
+                        onChange={(id) => field.onChange(id)}
+                        error={fieldState.error as any}
+                        onUploadStatusChange={(busy) => setBusy("school_logo", busy)}
+                      />
+                    )}
+                  />
+                  <Controller
+                    control={methods.control}
+                    name="school.pan_document_file"
+                    render={({ field, fieldState }) => (
+                      <ImagePickerField
+                        title="PAN Document"
+                        required
+                        value={field.value || null}
+                        initialUri={initialUrls.school_pan_doc}
+                        onChange={(id) => field.onChange(id)}
+                        error={fieldState.error as any}
+                        onUploadStatusChange={(busy) => setBusy("school_pan_doc", busy)}
+                      />
+                    )}
+                  />
+                  <Controller
+                    control={methods.control}
+                    name="school.registration_document_file"
+                    render={({ field, fieldState }) => (
+                      <ImagePickerField
+                        title="Registration Document"
+                        required
+                        value={field.value || null}
+                        initialUri={initialUrls.school_reg_doc}
+                        onChange={(id) => field.onChange(id)}
+                        error={fieldState.error as any}
+                        onUploadStatusChange={(busy) => setBusy("school_reg_doc", busy)}
+                      />
+                    )}
+                  />
+                </div>
+              </div>
+
+              {/* PROFILE */}
+              <div className="rounded-lg border p-4 space-y-4">
+                <div className="font-medium">Profile Information</div>
+
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+
+                  <Controller
+                    control={methods.control}
+                    name="profile.date_of_birth_bs"
+                    render={({ field }) => (
+                      <NepaliBsDatePickerField
+                        control={methods.control}
+                        name={"profile.date_of_birth_bs" as any}
+                        label="Date of birth (BS)"
+                        disabled={blocked}
+                        required={true}
+                      />
+                    )}
+                  />
+
+                  <Controller
+                    control={methods.control}
+                    name="profile.date_of_birth_ad"
+                    render={() => (
+                      <DatePickerField
+                        control={methods.control}
+                        name={"profile.date_of_birth_ad" as any}
+                        label="Date of birth (AD)"
+                        disabled={blocked}
+                        required
+                        toYear={new Date().getFullYear()} // optional for DOB
+                      />
+                    )}
+                  />
+
+
+
+                  <GenderSelectField control={methods.control} name={"profile.gender" as any} required disabled={blocked} />
+                  <BloodGroupSelectField control={methods.control} name={"profile.blood_group" as any} required disabled={blocked} />
+                  <NationalitySelectField control={methods.control} name={"profile.nationality" as any} required disabled={blocked} />
+                  <ReligionSelectField control={methods.control} name={"profile.religion" as any} required disabled={blocked} />
+                  <MotherTongueSelectField control={methods.control} name={"profile.mother_tongue" as any} required disabled={blocked} />
+
+                  <InputField
+                    label="Citizenship no"
+                    required
+                    placeholder="Citizenship no"
+                    disabled={blocked}
+                    {...methods.register("profile.citizenship_no")}
+                    error={methods.formState.errors.profile?.citizenship_no as any}
+                  />
+                  <InputField
+                    label="PAN no"
+                    placeholder="Pan no"
+                    required
+                    disabled={blocked}
+                    {...methods.register("profile.pan_no")}
+                    error={methods.formState.errors.profile?.pan_no as any}
+                  />
+                </div>
+              </div>
+
+              {/* ADDRESSES */}
+              <div className="space-y-6">
+
+                <NepalAddressFields
+                  title="Permanent Address"
                   control={methods.control}
-                  name="documents.photo_file"
-                  render={({ field, fieldState }) => (
-                    <ImagePickerField
-                      title="Photo"
-                      required
-                      value={field.value || null}
-                      initialUri={initialUrls.doc_photo}
-                      onChange={(id) => field.onChange(id)}
-                      error={fieldState.error as any}
-                      onUploadStatusChange={(busy) => setBusy("doc_photo", busy)}
-                    />
-                  )}
+                  register={methods.register}
+                  setValue={methods.setValue}
+                  watch={methods.watch}
+                  errors={methods.formState.errors}
+                  disabled={blocked}
+                  baseName={"addresses.0" as any}
                 />
-                <Controller
+
+                <NepalAddressFields
+                  title="Temporary Address"
                   control={methods.control}
-                  name="documents.signature_file"
-                  render={({ field, fieldState }) => (
-                    <ImagePickerField
-                      title="Signature"
-                      required
-                      value={field.value || null}
-                      initialUri={initialUrls.doc_signature}
-                      onChange={(id) => field.onChange(id)}
-                      error={fieldState.error as any}
-                      onUploadStatusChange={(busy) => setBusy("doc_signature", busy)}
-                    />
-                  )}
-                />
-                <Controller
-                  control={methods.control}
-                  name="documents.pan_file"
-                  render={({ field, fieldState }) => (
-                    <ImagePickerField
-                      title="PAN File"
-                      required
-                      value={field.value || null}
-                      initialUri={initialUrls.doc_pan}
-                      onChange={(id) => field.onChange(id)}
-                      error={fieldState.error as any}
-                      onUploadStatusChange={(busy) => setBusy("doc_pan", busy)}
-                    />
-                  )}
+                  register={methods.register}
+                  setValue={methods.setValue}
+                  watch={methods.watch}
+                  errors={methods.formState.errors}
+                  disabled={blocked}
+                  baseName={"addresses.1" as any}
                 />
               </div>
 
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <Controller
-                  control={methods.control}
-                  name="documents.citizenship_front_file"
-                  render={({ field, fieldState }) => (
-                    <ImagePickerField
-                      title="Citizenship Front"
-                      required
-                      value={field.value || null}
-                      initialUri={initialUrls.doc_cfront}
-                      onChange={(id) => field.onChange(id)}
-                      error={fieldState.error as any}
-                      onUploadStatusChange={(busy) => setBusy("doc_cfront", busy)}
-                    />
-                  )}
-                />
-                <Controller
-                  control={methods.control}
-                  name="documents.citizenship_back_file"
-                  render={({ field, fieldState }) => (
-                    <ImagePickerField
-                      title="Citizenship Back"
-                      required
-                      value={field.value || null}
-                      initialUri={initialUrls.doc_cback}
-                      onChange={(id) => field.onChange(id)}
-                      error={fieldState.error as any}
-                      onUploadStatusChange={(busy) => setBusy("doc_cback", busy)}
-                    />
-                  )}
-                />
+              {/* DOCUMENTS */}
+              <div className="rounded-lg border p-4 space-y-4">
+                <div className="font-medium">Documents</div>
+
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                  <Controller
+                    control={methods.control}
+                    name="documents.photo_file"
+                    render={({ field, fieldState }) => (
+                      <ImagePickerField
+                        title="Photo"
+                        required
+                        value={field.value || null}
+                        initialUri={initialUrls.doc_photo}
+                        onChange={(id) => field.onChange(id)}
+                        error={fieldState.error as any}
+                        onUploadStatusChange={(busy) => setBusy("doc_photo", busy)}
+                      />
+                    )}
+                  />
+                  <Controller
+                    control={methods.control}
+                    name="documents.signature_file"
+                    render={({ field, fieldState }) => (
+                      <ImagePickerField
+                        title="Signature"
+                        required
+                        value={field.value || null}
+                        initialUri={initialUrls.doc_signature}
+                        onChange={(id) => field.onChange(id)}
+                        error={fieldState.error as any}
+                        onUploadStatusChange={(busy) => setBusy("doc_signature", busy)}
+                      />
+                    )}
+                  />
+                  <Controller
+                    control={methods.control}
+                    name="documents.pan_file"
+                    render={({ field, fieldState }) => (
+                      <ImagePickerField
+                        title="PAN File"
+                        required
+                        value={field.value || null}
+                        initialUri={initialUrls.doc_pan}
+                        onChange={(id) => field.onChange(id)}
+                        error={fieldState.error as any}
+                        onUploadStatusChange={(busy) => setBusy("doc_pan", busy)}
+                      />
+                    )}
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <Controller
+                    control={methods.control}
+                    name="documents.citizenship_front_file"
+                    render={({ field, fieldState }) => (
+                      <ImagePickerField
+                        title="Citizenship Front"
+                        required
+                        value={field.value || null}
+                        initialUri={initialUrls.doc_cfront}
+                        onChange={(id) => field.onChange(id)}
+                        error={fieldState.error as any}
+                        onUploadStatusChange={(busy) => setBusy("doc_cfront", busy)}
+                      />
+                    )}
+                  />
+                  <Controller
+                    control={methods.control}
+                    name="documents.citizenship_back_file"
+                    render={({ field, fieldState }) => (
+                      <ImagePickerField
+                        title="Citizenship Back"
+                        required
+                        value={field.value || null}
+                        initialUri={initialUrls.doc_cback}
+                        onChange={(id) => field.onChange(id)}
+                        error={fieldState.error as any}
+                        onUploadStatusChange={(busy) => setBusy("doc_cback", busy)}
+                      />
+                    )}
+                  />
+                </div>
               </div>
             </div>
-          </div>
           );
         }}
       />
