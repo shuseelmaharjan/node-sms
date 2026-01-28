@@ -23,32 +23,100 @@ import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 
 import { InputField } from "../fields/InputField";
-import {
-  fetchDistricts,
-  fetchMunicipalities,
-  fetchProvinces,
-  type OptionItem,
-} from "./api/location.api";
+
+// ✅ Client-side datasets (adjust file name if needed)
+import provincesRaw from "./data/provinces.json";
+import districtsRaw from "./data/districts.json";
+
+// IMPORTANT: use the correct one that exists in your project
+import municipalitiesRaw from "./data/local_levels.json";
+// import municipalitiesRaw from "./data/local_level.json";
+
+import typesRaw from "./data/local_level_type.json";
+
+export type OptionItem = { value: string; label: string };
+
+type Province = { province_id: number; name: string; nepali_name: string };
+type District = {
+  district_id: number;
+  name: string;
+  nepali_name: string;
+  province_id: number;
+};
+type Municipality = {
+  municipality_id: number;
+  name: string;
+  nepali_name: string;
+  district_id: number;
+  local_level_type_id: number;
+};
+type LocalLevelType = {
+  local_level_type_id: number;
+  name: string;
+  nepali_name: string;
+};
+
+const PROVINCES = provincesRaw as Province[];
+const DISTRICTS = districtsRaw as District[];
+const MUNICIPALITIES = municipalitiesRaw as Municipality[];
+const TYPES = typesRaw as LocalLevelType[];
+
+const TYPE_BY_ID = new Map(TYPES.map((t) => [t.local_level_type_id, t]));
+const DISTRICT_BY_ID = new Map(DISTRICTS.map((d) => [d.district_id, d]));
+const MUNICIPALITY_BY_ID = new Map(MUNICIPALITIES.map((m) => [m.municipality_id, m]));
+
+function provincesOptions(): OptionItem[] {
+  return [...PROVINCES]
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .map((p) => ({ value: String(p.province_id), label: p.name }));
+}
+
+function districtsByProvinceOptions(provinceId: string): OptionItem[] {
+  const pid = Number(provinceId);
+  return DISTRICTS.filter((d) => d.province_id === pid)
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .map((d) => ({ value: String(d.district_id), label: d.name }));
+}
+
+function municipalitiesByDistrictOptions(districtId: string): OptionItem[] {
+  const did = Number(districtId);
+  return MUNICIPALITIES.filter((m) => m.district_id === did)
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .map((m) => {
+      const t = TYPE_BY_ID.get(m.local_level_type_id);
+      const label = t ? `${m.name} ${t.name}` : m.name;
+      return { value: String(m.municipality_id), label };
+    });
+}
+
+/**
+ * ✅ Key fix for "edit" rendering:
+ * Radix Select shows the value ONLY if it's in options.
+ * If your API returns district="5" but your districts.json doesn't include 5,
+ * Select will look empty. So we inject a fallback option.
+ */
+function ensureSelectedOption(
+  options: OptionItem[],
+  value?: string,
+  label?: string
+): OptionItem[] {
+  if (!value) return options;
+  if (options.some((o) => o.value === value)) return options;
+  return [{ value, label: label ?? `Unknown (ID: ${value})` }, ...options];
+}
 
 type Props<T extends FieldValues> = {
-  title: string; // "Permanent Address" / "Temporary Address"
+  title: string;
   control: Control<T>;
   register: UseFormRegister<T>;
   setValue: UseFormSetValue<T>;
   watch: UseFormWatch<T>;
   errors: FieldErrors<T>;
   disabled?: boolean;
-
-  /**
-   * Where this address lives in your form, example:
-   *  - "addresses.0"
-   *  - "addresses.1"
-   */
   baseName: Path<T>;
 };
 
 function getErr(obj: any, path: string): string | undefined {
-  // supports "addresses.0.province"
   const parts = path.split(".");
   let cur = obj;
   for (const p of parts) {
@@ -76,120 +144,131 @@ export function NepalAddressFields<T extends FieldValues>({
 
   const provinceValue = watch(provincePath) as unknown as string | undefined;
   const districtValue = watch(districtPath) as unknown as string | undefined;
+  const municipalityValue = watch(municipalityPath) as unknown as string | undefined;
 
   const [provinces, setProvinces] = React.useState<OptionItem[]>([]);
   const [districts, setDistricts] = React.useState<OptionItem[]>([]);
   const [municipalities, setMunicipalities] = React.useState<OptionItem[]>([]);
 
-  const [loadingProvince, setLoadingProvince] = React.useState(false);
-  const [loadingDistrict, setLoadingDistrict] = React.useState(false);
-  const [loadingMunicipality, setLoadingMunicipality] = React.useState(false);
-
-  const [initialLoadComplete, setInitialLoadComplete] = React.useState(false);
+  // used to avoid clearing on first paint (edit mode)
+  const hydratedRef = React.useRef(false);
 
   // Load provinces once
   React.useEffect(() => {
-    let alive = true;
-    (async () => {
-      try {
-        setLoadingProvince(true);
-        const data = await fetchProvinces();
-        if (!alive) return;
-        setProvinces(data);
-      } finally {
-        if (alive) setLoadingProvince(false);
-      }
-    })();
-    return () => {
-      alive = false;
-    };
+    setProvinces(provincesOptions());
   }, []);
 
-  // Load districts when province changes
+  /**
+   * ✅ If your backend sends municipality but district/province are missing,
+   * we can derive them from dataset (only works when JSON contains those IDs).
+   */
   React.useEffect(() => {
-    let alive = true;
+    // If municipality exists but district/province missing
+    if (municipalityValue) {
+      const m = MUNICIPALITY_BY_ID.get(Number(municipalityValue));
+      if (m) {
+        if (!districtValue) {
+          setValue(districtPath, String(m.district_id) as any, {
+            shouldDirty: false,
+            shouldValidate: false,
+          });
+        }
+        const d = DISTRICT_BY_ID.get(m.district_id);
+        if (d && !provinceValue) {
+          setValue(provincePath, String(d.province_id) as any, {
+            shouldDirty: false,
+            shouldValidate: false,
+          });
+        }
+      }
+    }
 
+    // If district exists but province missing
+    if (districtValue && !provinceValue) {
+      const d = DISTRICT_BY_ID.get(Number(districtValue));
+      if (d) {
+        setValue(provincePath, String(d.province_id) as any, {
+          shouldDirty: false,
+          shouldValidate: false,
+        });
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [municipalityValue, districtValue]);
+
+  /**
+   * ✅ Province -> District options
+   * Also inject fallback selected district if missing in JSON.
+   */
+  React.useEffect(() => {
     if (!provinceValue) {
       setDistricts([]);
       setMunicipalities([]);
-      if (initialLoadComplete) {
+
+      // Clear dependent fields only AFTER hydration (user action)
+      if (hydratedRef.current) {
         setValue(districtPath, "" as any, { shouldDirty: true, shouldValidate: false });
         setValue(municipalityPath, "" as any, { shouldDirty: true, shouldValidate: false });
       }
       return;
     }
 
-    (async () => {
-      try {
-        setLoadingDistrict(true);
-        const data = await fetchDistricts(provinceValue);
-        if (!alive) return;
-        setDistricts(data);
-        
-        // Only clear district/municipality after initial load if they're incompatible
-        if (initialLoadComplete && districtValue) {
-          const districtExists = data.some(d => d.value === districtValue);
-          if (!districtExists) {
-            setValue(districtPath, "" as any, { shouldDirty: true, shouldValidate: false });
-            setValue(municipalityPath, "" as any, { shouldDirty: true, shouldValidate: false });
-            setMunicipalities([]);
-          }
-        }
-      } finally {
-        if (alive) setLoadingDistrict(false);
+    const opts = districtsByProvinceOptions(provinceValue);
+    const optsWithSelected = ensureSelectedOption(
+      opts,
+      districtValue,
+      districtValue ? `Selected district (ID: ${districtValue})` : undefined
+    );
+    setDistricts(optsWithSelected);
+
+    // If user changed province and district is not valid, clear it (after hydration)
+    if (hydratedRef.current && districtValue) {
+      const ok = opts.some((d) => d.value === districtValue);
+      if (!ok) {
+        setValue(districtPath, "" as any, { shouldDirty: true, shouldValidate: false });
+        setValue(municipalityPath, "" as any, { shouldDirty: true, shouldValidate: false });
+        setMunicipalities([]);
       }
-    })();
+    }
 
-    return () => {
-      alive = false;
-    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [provinceValue]);
+  }, [provinceValue, districtValue]);
 
-  // Load municipalities when district changes
+  /**
+   * ✅ District -> Municipality options
+   * Also inject fallback selected municipality if missing in JSON.
+   */
   React.useEffect(() => {
-    let alive = true;
-
     if (!districtValue) {
       setMunicipalities([]);
-      if (initialLoadComplete) {
+
+      if (hydratedRef.current) {
         setValue(municipalityPath, "" as any, { shouldDirty: true, shouldValidate: false });
       }
       return;
     }
 
-    (async () => {
-      try {
-        setLoadingMunicipality(true);
-        const data = await fetchMunicipalities({ districtId: districtValue });
-        if (!alive) return;
-        setMunicipalities(data);
-        
-        // Mark initial load as complete after first municipality load
-        if (!initialLoadComplete) {
-          setInitialLoadComplete(true);
-        }
-        
-        // Only clear municipality after initial load if it's incompatible
-        if (initialLoadComplete) {
-          const municipalityValue = watch(municipalityPath) as unknown as string | undefined;
-          if (municipalityValue) {
-            const municipalityExists = data.some(m => m.value === municipalityValue);
-            if (!municipalityExists) {
-              setValue(municipalityPath, "" as any, { shouldDirty: true, shouldValidate: false });
-            }
-          }
-        }
-      } finally {
-        if (alive) setLoadingMunicipality(false);
-      }
-    })();
+    const opts = municipalitiesByDistrictOptions(districtValue);
+    const optsWithSelected = ensureSelectedOption(
+      opts,
+      municipalityValue,
+      municipalityValue ? `Selected municipality (ID: ${municipalityValue})` : undefined
+    );
+    setMunicipalities(optsWithSelected);
 
-    return () => {
-      alive = false;
-    };
+    // If user changed district and municipality is not valid, clear it (after hydration)
+    if (hydratedRef.current && municipalityValue) {
+      const ok = opts.some((m) => m.value === municipalityValue);
+      if (!ok) {
+        setValue(municipalityPath, "" as any, { shouldDirty: true, shouldValidate: false });
+      }
+    }
+
+    // Mark hydrated after first district options + municipality options pass
+    if (!hydratedRef.current) hydratedRef.current = true;
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [districtValue]);
+  }, [districtValue, municipalityValue]);
 
   const provinceError = getErr(errors, `${baseName}.province`);
   const districtError = getErr(errors, `${baseName}.district`);
@@ -198,7 +277,6 @@ export function NepalAddressFields<T extends FieldValues>({
   const wardErrorMsg = getErr(errors, `${baseName}.ward_no`);
   const toleErrorMsg = getErr(errors, `${baseName}.tole`);
 
-  // Convert string error -> FieldError-like shape for InputField
   const wardError = wardErrorMsg ? ({ message: wardErrorMsg } as any) : undefined;
   const toleError = toleErrorMsg ? ({ message: toleErrorMsg } as any) : undefined;
 
@@ -238,7 +316,6 @@ export function NepalAddressFields<T extends FieldValues>({
               disabled={disabled}
               value={field.value ? String(field.value) : ""}
               onValueChange={(v) => field.onChange(v || "")}
-              loading={loadingProvince}
               options={provinces}
               error={provinceError}
             />
@@ -256,10 +333,9 @@ export function NepalAddressFields<T extends FieldValues>({
               disabled={disabled || !provinceValue}
               value={field.value ? String(field.value) : ""}
               onValueChange={(v) => field.onChange(v || "")}
-              loading={loadingDistrict}
               options={districts}
               error={districtError}
-              placeholder={!provinceValue ? "Select province first" : undefined}
+              placeholder={!provinceValue ? "Select province first" : "Select District"}
             />
           )}
         />
@@ -275,15 +351,14 @@ export function NepalAddressFields<T extends FieldValues>({
               disabled={disabled || !districtValue}
               value={field.value ? String(field.value) : ""}
               onValueChange={(v) => field.onChange(v || "")}
-              loading={loadingMunicipality}
               options={municipalities}
               error={municipalityError}
-              placeholder={!districtValue ? "Select district first" : undefined}
+              placeholder={!districtValue ? "Select district first" : "Select Municipality"}
             />
           )}
         />
 
-        {/* Ward No (number only) */}
+        {/* Ward No */}
         <InputField
           label="Ward No"
           required
@@ -294,13 +369,12 @@ export function NepalAddressFields<T extends FieldValues>({
           error={wardError}
           {...register(wardPath as any, {
             onChange: (e) => {
-              // keep only digits
               e.target.value = String(e.target.value ?? "").replace(/\D/g, "");
             },
           })}
         />
 
-        {/* Tole (required) */}
+        {/* Tole */}
         <InputField
           label="Tole"
           required
@@ -321,7 +395,6 @@ function FieldSelect(props: {
   value: string;
   onValueChange: (v: string) => void;
   options: OptionItem[];
-  loading?: boolean;
   error?: string;
   placeholder?: string;
 }) {
@@ -339,9 +412,7 @@ function FieldSelect(props: {
           id={id}
           className={cn("w-full", props.error && "border-destructive focus-visible:ring-destructive/30")}
         >
-          <SelectValue
-            placeholder={props.loading ? "Loading..." : props.placeholder ?? `Select ${props.label}`}
-          />
+          <SelectValue placeholder={props.placeholder ?? `Select ${props.label}`} />
         </SelectTrigger>
 
         <SelectContent>
