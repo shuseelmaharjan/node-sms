@@ -114,7 +114,7 @@ export function ChangePasswordSettings() {
     mode: "onSubmit",
   });
 
-  const newPasswordValue = methods.watch("newPassword");
+  const newPasswordValue = methods.watch("new_password");
 
   const strengthHint = useMemo(() => {
     const v = newPasswordValue || "";
@@ -129,7 +129,7 @@ export function ChangePasswordSettings() {
   const mutation = useMutation({
     mutationFn: (values: ChangePasswordValues) => changePasswordApi.change(values),
     onSuccess: (data) => {
-      toast.success(data.detail || "Password updated successfully");
+      // Toast is already handled by API interceptor
       methods.reset(changePasswordDefaults);
       setShowOld(false);
       setShowNew(false);
@@ -179,7 +179,7 @@ export function ChangePasswordSettings() {
             >
               <FormField
                 control={methods.control}
-                name="oldPassword"
+                name="old_password"
                 render={({ field, fieldState }) => (
                   <PasswordField
                     label="Old Password"
@@ -197,7 +197,7 @@ export function ChangePasswordSettings() {
 
               <FormField
                 control={methods.control}
-                name="newPassword"
+                name="new_password"
                 render={({ field, fieldState }) => (
                   <PasswordField
                     label="New Password"
@@ -216,7 +216,7 @@ export function ChangePasswordSettings() {
 
               <FormField
                 control={methods.control}
-                name="confirmPassword"
+                name="confirm_password"
                 render={({ field, fieldState }) => (
                   <PasswordField
                     label="Confirm Password"

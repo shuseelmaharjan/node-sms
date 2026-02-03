@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { useState } from "react";
 import { useAuth } from "@/lib/auth";
 
@@ -115,6 +116,14 @@ export default function LoginForm() {
                       />
                     </FormControl>
                     <FormMessage />
+                    <div className="flex justify-end">
+                      <Link
+                        href="/forget-password"
+                        className="text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                      >
+                        Forgot your password?
+                      </Link>
+                    </div>
                   </FormItem>
                 )}
               />

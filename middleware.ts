@@ -5,7 +5,7 @@ import type { NextRequest } from "next/server";
 const protectedRoutes = ['/'];
 
 // Public routes that don't require auth
-const publicRoutes = ['/login'];
+const publicRoutes = ['/login', '/forget-password'];
 
 // Static/API routes to ignore
 const ignoreRoutes = ['/api', '/_next', '/favicon.ico'];
@@ -36,9 +36,11 @@ export function middleware(request: NextRequest) {
   // console.log('All cookies:', allCookies.map(c => `${c.name}=${c.value.substring(0, 20)}...`));
   // console.log('Has valid refresh token:', hasRefreshToken);
   
-  // Check if current path is protected
+  // Check if current path is protected (exclude public routes)
   const isProtectedRoute = protectedRoutes.some(route => 
     pathname.startsWith(route)
+  ) && !publicRoutes.some(route => 
+    pathname === route || pathname.startsWith(route + '/')
   );
   
   // Check if current path is public auth route
@@ -46,11 +48,24 @@ export function middleware(request: NextRequest) {
     pathname === route || pathname.startsWith(route + '/')
   );
 
-  console.log('Route classification:', { isProtectedRoute, isPublicRoute });
+  console.log('Route classification:', { isProtectedRoute, isPublicRoute, pathname });
 
-  // MODIFIED: Allow protected routes even without cookies - let client-side auth handle it
-  // This prevents redirect loops when user has valid access token but no httpOnly cookies
-  
+  // Handle public routes - allow access, redirect if authenticated
+  if (isPublicRoute) {
+    if (hasRefreshToken) {
+      // console.log('Redirecting to overview - has refresh token');
+      return NextResponse.redirect(new URL('/overview', request.url));
+    }
+    // Allow access to public routes when not authenticated
+    return NextResponse.next();
+  }
+
+  // Handle protected routes - redirect to login if not authenticated
+  if (isProtectedRoute && !hasRefreshToken) {
+    // console.log('Redirecting to login - protected route without auth');
+    return NextResponse.redirect(new URL(`/login?redirect=${encodeURIComponent(pathname)}`, request.url));
+  }
+
   // Only redirect away from public routes if we have clear evidence of authentication
   if (isPublicRoute && hasRefreshToken) {
     // console.log('Redirecting to dashboard - has refresh token');
@@ -61,7 +76,7 @@ export function middleware(request: NextRequest) {
   if (pathname === '/') {
     if (hasRefreshToken) {
       // console.log('Root redirect to dashboard (has auth)');
-      return NextResponse.redirect(new URL('/overviewoverview', request.url));
+      return NextResponse.redirect(new URL('/overview', request.url));
     } else {
       // console.log('Root redirect to login (no auth)');
       return NextResponse.redirect(new URL('/login', request.url));
