@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { PUBLIC_ROUTES, IGNORE_PREFIXES, isRouteInList } from "@/config/routes";
+import { PUBLIC_ROUTES, IGNORE_PREFIXES, isRouteInList } from "@/router/routes";
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;

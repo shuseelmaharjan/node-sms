@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { bootstrapSession } from "@/lib/auth/session";
-import { PUBLIC_ROUTES, isRouteInList } from "@/config/routes";
+import { PUBLIC_ROUTES, isRouteInList } from "@/router/routes";
 
 export function AuthBootstrap() {
   const pathname = usePathname();

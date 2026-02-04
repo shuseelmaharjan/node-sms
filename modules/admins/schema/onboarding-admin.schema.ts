@@ -27,7 +27,6 @@ const schoolSchema = z.object({
 
 const profileSchema = z.object({
   date_of_birth_ad: z.string().min(1, "DOB (AD) is required"),
-  // UI-only (optional): if you want to store BS in form state
   date_of_birth_bs: z.string().optional().default(""),
 
   gender: z.string().min(1, "Gender is required"),
@@ -39,29 +38,61 @@ const profileSchema = z.object({
   pan_no: z.string().min(1, "PAN no is required"),
 });
 
-const addressSchema = z.object({
+// Shared optional fields
+const addressCommon = {
   id: z.string().optional(),
-  address_type: z.enum(["permanent", "temporary"]),
-  province: z.string().min(1, "Province is required"),
-  district: z.string().min(1, "District is required"),
-  municipality: z.string().min(1, "Municipality is required"),
-  ward_no: z.string().min(1, "Ward no is required"),
-  country: z.string().min(1, "Country is required").default("Nepal"),
+  province: z.string(),
+  district: z.string(),
+  municipality: z.string(),
+  ward_no: z.string(),
+  country: z.string().default("Nepal"),
   street: z.string().optional().default(""),
-  tole: z.string().min(1, "Tole is required"),
+  tole: z.string(),
   house_no: z.string().optional().default(""),
   postal_code: z.string().optional().default(""),
   is_primary: z.boolean().default(false),
+};
+
+// Permanent: required
+const permanentAddressSchema = z.object({
+  address_type: z.literal("permanent"),
+  ...addressCommon,
+}).superRefine((val, ctx) => {
+  if (!val.province) ctx.addIssue({ code: "custom", path: ["province"], message: "Province is required" });
+  if (!val.district) ctx.addIssue({ code: "custom", path: ["district"], message: "District is required" });
+  if (!val.municipality) ctx.addIssue({ code: "custom", path: ["municipality"], message: "Municipality is required" });
+  if (!val.ward_no) ctx.addIssue({ code: "custom", path: ["ward_no"], message: "Ward no is required" });
+  if (!val.tole) ctx.addIssue({ code: "custom", path: ["tole"], message: "Tole is required" });
 });
+
+// Temporary: allow blank
+const temporaryAddressSchema = z.object({
+  address_type: z.literal("temporary"),
+  ...addressCommon,
+}).superRefine((val, ctx) => {
+  // If user starts filling temporary, then require the main fields
+  const started =
+    Boolean(val.province || val.district || val.municipality || val.ward_no || val.tole);
+
+  if (started) {
+    if (!val.province) ctx.addIssue({ code: "custom", path: ["province"], message: "Province is required" });
+    if (!val.district) ctx.addIssue({ code: "custom", path: ["district"], message: "District is required" });
+    if (!val.municipality) ctx.addIssue({ code: "custom", path: ["municipality"], message: "Municipality is required" });
+    if (!val.ward_no) ctx.addIssue({ code: "custom", path: ["ward_no"], message: "Ward no is required" });
+    if (!val.tole) ctx.addIssue({ code: "custom", path: ["tole"], message: "Tole is required" });
+  }
+});
+
+const addressSchema = z.discriminatedUnion("address_type", [
+  permanentAddressSchema,
+  temporaryAddressSchema,
+]);
 
 const documentsSchema = z.object({
   photo_file: z.string().min(1, "Photo is required"),
-
   citizenship_front_file: z.string().min(1, "Citizenship (front) is required"),
   citizenship_back_file: z.string().min(1, "Citizenship (back) is required"),
-
   pan_file: z.string().min(1, "PAN file is required"),
-
   signature_file: z.string().min(1, "Signature is required"),
 });
 
@@ -69,9 +100,9 @@ export const onboardingAdminSchema = z.object({
   user: userSchema,
   school: schoolSchema,
   profile: profileSchema,
-  addresses: z
-    .array(addressSchema)
-    .length(2, "Must include permanent and temporary address"),
+  // Keep length(2) because your form state always has 2 objects,
+  // but temporary can now be blank safely.
+  addresses: z.array(addressSchema).length(2, "Must include permanent and temporary address"),
   documents: documentsSchema,
 });
 

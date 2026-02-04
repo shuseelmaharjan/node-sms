@@ -1,21 +1,22 @@
+// modules/admins/components/admins-form-page.tsx
 "use client";
 
 import * as React from "react";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { Controller } from "react-hook-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
-import Link from "next/link";
 import { format } from "date-fns";
+import NepaliDate from "nepali-date-converter";
 
-import { api } from "@/api";
+import { api } from "@/api/client"; // CHANGE THIS if your export path is different
 import { FormWizard } from "@/components/form/FormWizard";
 import { Button } from "@/components/ui/button";
 import { InputField } from "@/components/fields/InputField";
 import { DatePickerField } from "@/components/fields/DatePickerField";
 import { ImagePickerField } from "@/components/form/ImagePickerField";
 import { NepaliBsDatePickerField } from "@/components/nepaliDate/NepaliBsDatePickerField";
-import NepaliDate from "nepali-date-converter";
+
 import {
   BloodGroupSelectField,
   GenderSelectField,
@@ -31,16 +32,25 @@ import {
   onboardingAdminSchema,
   type OnboardingAdminValues,
 } from "../schema/onboarding-admin.schema";
-
 import type { OnboardingAdminEntity } from "../columns/onboarding-admin.columns";
 
 const LIST_URL = "/api/onboarding/admin/";
 const DETAIL_URL = (id: string) => `/api/onboarding/admin/${id}/`;
 
-// Remove "+977" for editing convenience
+/** Remove "+977" for editing convenience */
 function normalizePhoneForForm(phone?: string | null) {
   if (!phone) return "";
   return String(phone).replace(/^\+977/, "").trim();
+}
+
+/** Ensure Nepal phone prefix before sending to API */
+function formatPhoneForApi(phone: string) {
+  const raw = (phone ?? "").trim();
+  if (!raw) return "";
+  // If user typed +977..., keep it
+  if (raw.startsWith("+")) return raw;
+  // If user typed 98xxxxxxx etc, add +977
+  return `+977${raw}`;
 }
 
 const createDefaults: OnboardingAdminValues = {
@@ -165,21 +175,57 @@ function toDefaults(entity: OnboardingAdminEntity): OnboardingAdminValues {
     },
   };
 }
+function isTemporaryAddressFilled(a: any) {
+  if (!a) return false;
+  return Boolean(a.province || a.district || a.municipality || a.ward_no || a.tole);
+}
+
+function docObj(fileId: string, issuedDate?: string) {
+  return {
+    file: fileId,
+    remarks: "",
+    issued_by: "",
+    issued_date: issuedDate || "",   // backend often expects date string
+    expiry_date: issuedDate || "",   // same
+  };
+}
 
 function toPayload(values: OnboardingAdminValues) {
+  const issuedDate = values.profile.date_of_birth_ad || "";
+
+  const addresses = values.addresses
+    .filter((a) => {
+      if (a.address_type === "permanent") return true;
+      return isTemporaryAddressFilled(a);
+    })
+    .map((a) => ({
+      ...(a.id ? { id: a.id } : {}),
+      address_type: a.address_type,
+      province: a.province,
+      district: a.district,
+      municipality: a.municipality,
+      ward_no: a.ward_no,
+      country: a.country || "Nepal",
+      street: a.street,
+      tole: a.tole,
+      house_no: a.house_no,
+      postal_code: a.postal_code,
+      is_primary: a.is_primary,
+    }));
+
   return {
     user: {
       first_name: values.user.first_name,
       middle_name: values.user.middle_name || "",
       last_name: values.user.last_name,
-      phone: values.user.phone,
+      phone: formatPhoneForApi(values.user.phone),
       email: values.user.email,
     },
     school: {
       code: values.school.code,
       name: values.school.name,
       address: values.school.address,
-      phone: values.school.phone,
+      phone: formatPhoneForApi(values.school.phone),
       email: values.school.email,
       logo_file: values.school.logo_file,
       pan_number: values.school.pan_number,
@@ -189,6 +235,7 @@ function toPayload(values: OnboardingAdminValues) {
     },
     profile: {
       date_of_birth_ad: values.profile.date_of_birth_ad,
+      date_of_birth_bs: values.profile.date_of_birth_bs || "", // ✅ send BS too
       gender: values.profile.gender,
       blood_group: values.profile.blood_group,
       nationality: values.profile.nationality,
@@ -197,51 +244,29 @@ function toPayload(values: OnboardingAdminValues) {
       citizenship_no: values.profile.citizenship_no,
       pan_no: values.profile.pan_no,
     },
-    addresses: values.addresses.map((a) => ({
-      ...(a.id ? { id: a.id } : {}),
-      address_type: a.address_type,
-      province: a.province,
-      district: a.district,
-      municipality: a.municipality,
-      ward_no: a.ward_no,
-      country: a.country,
-      street: a.street,
-      tole: a.tole,
-      house_no: a.house_no,
-      postal_code: a.postal_code,
-      is_primary: a.is_primary,
-    })),
+    addresses,
     documents: {
-      photo: { file: values.documents.photo_file },
-      citizenship_front: {
-        file: values.documents.citizenship_front_file,
-      },
-      citizenship_back: {
-        file: values.documents.citizenship_back_file,
-      },
-      pan: {
-        file: values.documents.pan_file,
-      },
-      signature: { file: values.documents.signature_file },
+      photo: docObj(values.documents.photo_file, issuedDate),
+      citizenship_front: docObj(values.documents.citizenship_front_file, issuedDate),
+      citizenship_back: docObj(values.documents.citizenship_back_file, issuedDate),
+      pan: docObj(values.documents.pan_file, issuedDate),
+      signature: docObj(values.documents.signature_file, issuedDate),
     },
   };
 }
 
+
 export function AdminsFormPage(props: { mode: "create" | "edit" }) {
   const router = useRouter();
   const searchParams = useSearchParams();
-
   const id = props.mode === "edit" ? (searchParams.get("user_id") || "") : "";
 
   const qc = useQueryClient();
 
-  // upload busy stable handlers (prevents max depth loop)
+  // Upload busy map (prevents submit while uploads running)
   const [uploadBusy, setUploadBusy] = React.useState<Record<string, boolean>>({});
   const setBusy = React.useCallback((key: string, busy: boolean) => {
-    setUploadBusy((prev) => {
-      if (prev[key] === busy) return prev;
-      return { ...prev, [key]: busy };
-    });
+    setUploadBusy((prev) => (prev[key] === busy ? prev : { ...prev, [key]: busy }));
   }, []);
   const externallyBlocked = React.useMemo(
     () => Object.values(uploadBusy).some(Boolean),
@@ -262,9 +287,8 @@ export function AdminsFormPage(props: { mode: "create" | "edit" }) {
       const res = await api.post(LIST_URL, toPayload(values));
       return res.data as any;
     },
-    onSuccess: async (data) => {
+    onSuccess: async () => {
       await qc.invalidateQueries({ queryKey: ["onboarding-admin", "list"] });
-      // Toast is handled by ToastInterceptor from server response
       router.push("/admins");
       router.refresh();
     },
@@ -275,19 +299,16 @@ export function AdminsFormPage(props: { mode: "create" | "edit" }) {
       const res = await api.put(DETAIL_URL(id), toPayload(values));
       return res.data as any;
     },
-    onSuccess: async (resp) => {
+    onSuccess: async () => {
       await qc.invalidateQueries({ queryKey: ["onboarding-admin", "list"] });
       await qc.invalidateQueries({ queryKey: ["onboarding-admin", "detail", id] });
-      // Toast is handled by ToastInterceptor from server response
       router.push("/admins");
       router.refresh();
     },
   });
 
   const blocked =
-    detailQuery.isFetching ||
-    createMutation.isPending ||
-    updateMutation.isPending;
+    detailQuery.isFetching || createMutation.isPending || updateMutation.isPending;
 
   const entity = detailQuery.data ?? null;
 
@@ -321,7 +342,11 @@ export function AdminsFormPage(props: { mode: "create" | "edit" }) {
   return (
     <PageShell
       title={title}
-      description={props.mode === "create" ? "Create a new admin onboarding." : "Update admin onboarding."}
+      description={
+        props.mode === "create"
+          ? "Create a new admin onboarding."
+          : "Update admin onboarding."
+      }
       actions={
         <Button variant="outline" asChild>
           <Link href="/admins">Back</Link>
@@ -336,7 +361,7 @@ export function AdminsFormPage(props: { mode: "create" | "edit" }) {
         externallyBlocked={externallyBlocked}
         submitLoading={createMutation.isPending || updateMutation.isPending}
         submitLabel={props.mode === "create" ? "Create" : "Update"}
-        disableSubmitUntilDirty={true}
+        disableSubmitUntilDirty
         onSubmit={async (values, methods) => {
           try {
             if (props.mode === "create") {
@@ -345,20 +370,16 @@ export function AdminsFormPage(props: { mode: "create" | "edit" }) {
               await updateMutation.mutateAsync(values);
             }
           } catch (error) {
-            // Map server errors to form fields
-            // ToastInterceptor already handles toast notifications
-            handleFormError(error, {
-              setError: methods.setError,
-            });
+            // ✅ Axios interceptor shows toast already.
+            // Here we only map errors to fields.
+            handleFormError(error, { setError: methods.setError });
           }
         }}
         render={(methods) => {
-          // Watch for date changes and synchronize BS <-> AD
           const bsDate = methods.watch("profile.date_of_birth_bs");
           const adDate = methods.watch("profile.date_of_birth_ad");
 
           React.useEffect(() => {
-            // Convert BS to AD when BS date changes
             if (bsDate && bsDate.length === 10) {
               try {
                 const [year, month, day] = bsDate.split("-").map(Number);
@@ -369,17 +390,17 @@ export function AdminsFormPage(props: { mode: "create" | "edit" }) {
                 if (adDate !== formatted) {
                   methods.setValue("profile.date_of_birth_ad", formatted, {
                     shouldValidate: false,
-                    shouldDirty: true
+                    shouldDirty: true,
                   });
                 }
-              } catch (error) {
-                console.error("Error converting BS to AD:", error);
+              } catch {
+                // ignore conversion errors
               }
             }
+            // eslint-disable-next-line react-hooks/exhaustive-deps
           }, [bsDate]);
 
           React.useEffect(() => {
-            // Convert AD to BS when AD date changes
             if (adDate && adDate.length === 10) {
               try {
                 const englishDate = new Date(adDate);
@@ -389,13 +410,14 @@ export function AdminsFormPage(props: { mode: "create" | "edit" }) {
                 if (bsDate !== formatted) {
                   methods.setValue("profile.date_of_birth_bs", formatted, {
                     shouldValidate: false,
-                    shouldDirty: true
+                    shouldDirty: true,
                   });
                 }
-              } catch (error) {
-                console.error("Error converting AD to BS:", error);
+              } catch {
+                // ignore conversion errors
               }
             }
+            // eslint-disable-next-line react-hooks/exhaustive-deps
           }, [adDate]);
 
           return (
@@ -433,9 +455,10 @@ export function AdminsFormPage(props: { mode: "create" | "edit" }) {
                     label="Phone"
                     required
                     disabled={blocked}
-                    placeholder="Phone number"
+                    placeholder="98XXXXXXXX"
                     {...methods.register("user.phone")}
                     error={methods.formState.errors.user?.phone as any}
+                    hint="We’ll automatically add +977 when saving."
                   />
                   <InputField
                     label="Email"
@@ -453,20 +476,63 @@ export function AdminsFormPage(props: { mode: "create" | "edit" }) {
                 <div className="font-medium">School Information</div>
 
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                  <InputField label="Code" required disabled={blocked} placeholder="School Code" {...methods.register("school.code")}
-                    error={methods.formState.errors.school?.code as any} />
-                  <InputField label="Name" required disabled={blocked} placeholder="School Name" {...methods.register("school.name")}
-                    error={methods.formState.errors.school?.name as any} />
-                  <InputField label="Address" required disabled={blocked} placeholder="School Address" {...methods.register("school.address")}
-                    error={methods.formState.errors.school?.address as any} />
-                  <InputField label="Phone" required disabled={blocked} placeholder="School Phone" {...methods.register("school.phone")}
-                    error={methods.formState.errors.school?.phone as any} />
-                  <InputField label="Email" required disabled={blocked} placeholder="School Email" {...methods.register("school.email")}
-                    error={methods.formState.errors.school?.email as any} />
-                  <InputField label="PAN number" required disabled={blocked} placeholder="School PAN Number" {...methods.register("school.pan_number")}
-                    error={methods.formState.errors.school?.pan_number as any} />
-                  <InputField label="Registration number" required disabled={blocked} placeholder="School Registration Number" {...methods.register("school.registration_number")}
-                    error={methods.formState.errors.school?.registration_number as any} />
+                  <InputField
+                    label="Code"
+                    required
+                    disabled={blocked}
+                    placeholder="School Code"
+                    {...methods.register("school.code")}
+                    error={methods.formState.errors.school?.code as any}
+                  />
+                  <InputField
+                    label="Name"
+                    required
+                    disabled={blocked}
+                    placeholder="School Name"
+                    {...methods.register("school.name")}
+                    error={methods.formState.errors.school?.name as any}
+                  />
+                  <InputField
+                    label="Address"
+                    required
+                    disabled={blocked}
+                    placeholder="School Address"
+                    {...methods.register("school.address")}
+                    error={methods.formState.errors.school?.address as any}
+                  />
+                  <InputField
+                    label="Phone"
+                    required
+                    disabled={blocked}
+                    placeholder="98XXXXXXXX"
+                    {...methods.register("school.phone")}
+                    error={methods.formState.errors.school?.phone as any}
+                    hint="We’ll automatically add +977 when saving."
+                  />
+                  <InputField
+                    label="Email"
+                    required
+                    disabled={blocked}
+                    placeholder="School Email"
+                    {...methods.register("school.email")}
+                    error={methods.formState.errors.school?.email as any}
+                  />
+                  <InputField
+                    label="PAN number"
+                    required
+                    disabled={blocked}
+                    placeholder="School PAN Number"
+                    {...methods.register("school.pan_number")}
+                    error={methods.formState.errors.school?.pan_number as any}
+                  />
+                  <InputField
+                    label="Registration number"
+                    required
+                    disabled={blocked}
+                    placeholder="School Registration Number"
+                    {...methods.register("school.registration_number")}
+                    error={methods.formState.errors.school?.registration_number as any}
+                  />
                 </div>
 
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
@@ -523,37 +589,22 @@ export function AdminsFormPage(props: { mode: "create" | "edit" }) {
                 <div className="font-medium">Profile Information</div>
 
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-
-                  <Controller
+                  <NepaliBsDatePickerField
                     control={methods.control}
-                    name="profile.date_of_birth_bs"
-                    render={({ field }) => (
-                      <NepaliBsDatePickerField
-                        control={methods.control}
-                        name={"profile.date_of_birth_bs" as any}
-                        label="Date of birth (BS)"
-                        disabled={blocked}
-                        required={true}
-                      />
-                    )}
+                    name={"profile.date_of_birth_bs" as any}
+                    label="Date of birth (BS)"
+                    disabled={blocked}
+                    required
                   />
 
-                  <Controller
+                  <DatePickerField
                     control={methods.control}
-                    name="profile.date_of_birth_ad"
-                    render={() => (
-                      <DatePickerField
-                        control={methods.control}
-                        name={"profile.date_of_birth_ad" as any}
-                        label="Date of birth (AD)"
-                        disabled={blocked}
-                        required
-                        toYear={new Date().getFullYear()} // optional for DOB
-                      />
-                    )}
+                    name={"profile.date_of_birth_ad" as any}
+                    label="Date of birth (AD)"
+                    disabled={blocked}
+                    required
+                    toYear={new Date().getFullYear()}
                   />
-
-
 
                   <GenderSelectField control={methods.control} name={"profile.gender" as any} required disabled={blocked} />
                   <BloodGroupSelectField control={methods.control} name={"profile.blood_group" as any} required disabled={blocked} />
@@ -571,8 +622,8 @@ export function AdminsFormPage(props: { mode: "create" | "edit" }) {
                   />
                   <InputField
                     label="PAN no"
-                    placeholder="Pan no"
                     required
+                    placeholder="PAN no"
                     disabled={blocked}
                     {...methods.register("profile.pan_no")}
                     error={methods.formState.errors.profile?.pan_no as any}
@@ -582,7 +633,6 @@ export function AdminsFormPage(props: { mode: "create" | "edit" }) {
 
               {/* ADDRESSES */}
               <div className="space-y-6">
-
                 <NepalAddressFields
                   title="Permanent Address"
                   control={methods.control}

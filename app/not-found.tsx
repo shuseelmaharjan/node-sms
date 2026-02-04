@@ -14,13 +14,13 @@ export default function NotFound() {
             The page you're looking for doesn't exist or has been moved.
           </CardDescription>
         </CardHeader>
-        <CardContent className="text-center">
+        {/* <CardContent className="text-center">
           <Button asChild>
             <Link href="/overview">
               Return to Dashboard
             </Link>
           </Button>
-        </CardContent>
+        </CardContent> */}
       </Card>
     </div>
   );
