@@ -1,4 +1,3 @@
-// layout.tsx
 import { Providers } from "./providers";
 import { ConditionalLayout } from "./ConditionalLayout";
 import "./globals.css";

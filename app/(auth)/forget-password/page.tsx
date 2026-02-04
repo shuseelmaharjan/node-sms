@@ -1,5 +1,5 @@
-import { ResetPasswordSettings } from "@/modules/org/components/ResetPasswordSettings";
+import ForgotPasswordPage from "@/modules/auth/components/ForgetPassword";
 
-export default function ForgetPasswordPage() {
-  return <ResetPasswordSettings />;
+export default function Page() {
+  return <ForgotPasswordPage />;
 }

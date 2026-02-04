@@ -15,6 +15,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { Spinner } from "@/components/ui/spinner";
 
 export default function LoginForm() {
   const router = useRouter();
@@ -37,17 +38,9 @@ export default function LoginForm() {
 
   async function onSubmit(values: LoginSchema) {
     try {
-      // console.log('LoginForm: Starting login...');
       await login(values.identifier, values.password);
-      
-      // console.log('LoginForm: Login successful, auth state updated');
-      
-      // Let the auth layout handle the redirect to avoid conflicts
-      // The auth layout will detect the auth state change and redirect
-      
-    } catch (err: any) {
-      // All error handling is done via toasts in the API client
-      // No form errors needed
+      router.replace(redirectTo);
+    } catch (err) {
       console.error("Login error:", err);
     }
   }
@@ -130,9 +123,9 @@ export default function LoginForm() {
 
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? (
-                  <div className="flex items-center space-x-2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                    <span>Signing in...</span>
+                  <div className="flex items-center gap-2">
+                    <Spinner />
+                    <span className="text-sm">Signing in...</span>
                   </div>
                 ) : (
                   "Sign in"
@@ -141,8 +134,27 @@ export default function LoginForm() {
 
               <Separator />
 
-              <p className="text-center text-xs text-slate-500">
-                By continuing, you agree to our terms and privacy policy.
+
+              <p className="text-pretty mt-4 text-xs text-muted-foreground">
+                By signing in, you agree to our{" "}
+                <Link
+                  href="/terms"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline underline-offset-4 hover:text-foreground"
+                >
+                  terms of service
+                </Link>{" "}
+                and{" "}
+                <Link
+                  href="/privacy"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline underline-offset-4 hover:text-foreground"
+                >
+                  privacy policy
+                </Link>
+                .
               </p>
             </form>
           </Form>

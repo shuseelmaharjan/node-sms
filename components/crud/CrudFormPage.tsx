@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { FormWizard } from "@/components/form/FormWizard";
 import { ConfirmDeleteDialog } from "@/components/crud/ConfirmDeleteDialog";
 import type { CrudApi, CrudCache } from "@/components/crud/types";
+import { Spinner } from "@/components/ui/spinner";
 
 type CrudFormPageProps<S extends z.ZodObject<any, any>, Entity> = {
   title?: string;
@@ -117,7 +118,14 @@ export function CrudFormPage<S extends z.ZodObject<any, any>, Entity>({
     (mode === "edit" && entityQuery.isFetching);
 
   if (mode === "edit" && entityQuery.isLoading) {
-    return <div className="p-6 text-sm text-muted-foreground">Loading…</div>;
+    return (
+      <div className="p-6 flex items-center justify-center">
+        <div className="flex items-center gap-2">
+          <Spinner />
+          <span className="text-sm">Loading...</span>
+        </div>
+      </div>
+    );
   }
 
   if (mode === "edit" && entityQuery.isError) {

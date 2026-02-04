@@ -1,34 +1,28 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { RequireAuth } from "@/lib/auth/components";
 import { DashboardLayout } from "@/layout";
+import { PUBLIC_ROUTES, isRouteInList } from "@/config/routes";
+import { useAuth } from "@/lib/auth";
+import { Spinner } from "@/components/ui/spinner";
 
 export function ConditionalLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const { isLoading } = useAuth();
 
-  // Routes that should NOT have dashboard layout or auth protection
-  const publicRoutes = [
-    "/login",
-    "/register",
-    "/forget-password",
-    "/debug-auth",
-    "/debug-cookies",
-  ];
+  const isPublic = isRouteInList(pathname, PUBLIC_ROUTES) || pathname.startsWith("/api");
+  if (isPublic) return <>{children}</>;
 
-  const isPublicRoute =
-    publicRoutes.some(
-      (route) => pathname === route || pathname.startsWith(route + "/")
-    ) || pathname.startsWith("/api");
-
-  if (isPublicRoute) {
-    return <>{children}</>;
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="flex items-center gap-2">
+          <Spinner />
+          <span className="text-sm">Loading...</span>
+        </div>
+      </div>
+    );
   }
 
-  // All other routes require authentication + dashboard layout
-  return (
-    <RequireAuth>
-      <DashboardLayout>{children}</DashboardLayout>
-    </RequireAuth>
-  );
+  return <DashboardLayout>{children}</DashboardLayout>;
 }

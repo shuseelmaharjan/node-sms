@@ -12,6 +12,7 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { Spinner } from "@/components/ui/spinner";
 
 type Schema = z.ZodObject<any, any>;
 type Values<S extends Schema> = z.infer<S> & FieldValues;
@@ -144,7 +145,14 @@ export function FormWizard<S extends Schema>({
             </Button>
 
             <Button type="submit">
-              {submitLoading ? "Saving..." : submitLabel}
+              {submitLoading ? (
+                <div className="flex items-center gap-2">
+                  <Spinner />
+                  <span className="text-sm">Submitting...</span>
+                </div>
+              ) : (
+                submitLabel
+              )}
             </Button>
           </div>
         </div>

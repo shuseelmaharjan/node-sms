@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth";
+import { Spinner } from "@/components/ui/spinner";
 
 export default function LandingPage() {
   const router = useRouter();
@@ -23,9 +24,9 @@ export default function LandingPage() {
   // Show loading state while checking auth
   return (
     <div className="flex items-center justify-center min-h-screen">
-      <div className="text-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-        <p className="mt-2 text-gray-600">Loading...</p>
+      <div className="flex items-center gap-2">
+        <Spinner />
+        <span className="text-sm">Loading...</span>
       </div>
     </div>
   );

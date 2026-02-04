@@ -11,6 +11,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Spinner } from "@/components/ui/spinner";
 
 type ConfirmDeleteDialogProps = {
   open: boolean;
@@ -53,7 +54,14 @@ export function ConfirmDeleteDialog({
             }}
             disabled={loading}
           >
-            {loading ? "Deleting..." : confirmLabel}
+            {loading ? (
+              <div className="flex items-center gap-2">
+                <Spinner />
+                <span className="text-sm">Deleting...</span>
+              </div>
+            ) : (
+              confirmLabel
+            )}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

@@ -1,8 +1,10 @@
+// layout/DashboardLayout/DashboardLayout.tsx
 "use client";
 
 import React, { Suspense } from "react";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { useAuth } from "@/lib/auth";
+import { Spinner } from "@/components/ui/spinner";
 
 import { AppSidebar } from "./components/AppSidebar";
 import { DashboardHeader } from "./components/DashboardHeader";
@@ -19,7 +21,10 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     return (
       <div className="min-h-svh grid place-items-center bg-background">
         <div className="rounded-xl border bg-card px-6 py-5 shadow-sm">
-          <p className="text-sm text-muted-foreground">Loading dashboard…</p>
+          <div className="flex items-center gap-2">
+            <Spinner />
+            <span className="text-sm">Loading...</span>
+          </div>
         </div>
       </div>
     );
@@ -37,7 +42,10 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
             <Suspense
               fallback={
                 <div className="grid place-items-center py-10">
-                  <p className="text-sm text-muted-foreground">Loading…</p>
+                  <div className="flex items-center gap-2">
+                    <Spinner />
+                    <span className="text-sm">Loading...</span>
+                  </div>
                 </div>
               }
             >

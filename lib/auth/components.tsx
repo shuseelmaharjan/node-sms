@@ -1,6 +1,9 @@
+// lib/auth/components.tsx
+
 "use client";
 
 import { useAuthGuard } from "./guard";
+import { Spinner } from "@/components/ui/spinner";
 
 interface RequireAuthProps {
   children: React.ReactNode;
@@ -27,9 +30,9 @@ export function RequireAuth({
 export function AuthGuardLoader() {
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-white">
-      <div className="flex flex-col items-center space-y-4">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-        <p className="text-gray-600 font-medium">Loading...</p>
+      <div className="flex items-center gap-2">
+        <Spinner />
+        <span className="text-sm">Loading data...</span>
       </div>
     </div>
   );

@@ -38,6 +38,7 @@ import {
   X,
 } from "lucide-react";
 import Image from "next/image";
+import { Spinner } from "@/components/ui/spinner";
 
 type DataTablePagination = {
   /** 0-based index */
@@ -317,9 +318,12 @@ export function DataTable<T>({
                 <TableRow>
                   <TableCell
                     colSpan={colCount}
-                    className="h-24 text-center text-muted-foreground"
+                    className="h-24 text-center"
                   >
-                    Loading…
+                    <div className="flex items-center justify-center gap-2">
+                      <Spinner />
+                      <span className="text-sm">Loading...</span>
+                    </div>
                   </TableCell>
                 </TableRow>
               ) : table.getRowModel().rows.length ? (

@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { X } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
 
 type CrudFormModalProps<S extends z.ZodObject<any, any>, Entity> = {
   open: boolean;
@@ -238,7 +239,12 @@ export function CrudFormModal<S extends z.ZodObject<any, any>, Entity>({
 
           <div>
             {showLoading ? (
-              <div className="py-10 text-sm text-muted-foreground">Loading…</div>
+              <div className="py-10 flex items-center justify-center">
+                <div className="flex items-center gap-2">
+                  <Spinner />
+                  <span className="text-sm">Loading...</span>
+                </div>
+              </div>
             ) : showError ? (
               <div className="py-10 text-sm text-destructive">Failed to load.</div>
             ) : (

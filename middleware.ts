@@ -1,59 +1,29 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-
-// Public routes that don't require auth
-const publicRoutes = ["/login", "/register", "/forget-password"];
-
-// Static/API routes to ignore
-const ignoreRoutes = ["/api", "/_next", "/favicon.ico"];
+import { PUBLIC_ROUTES, IGNORE_PREFIXES, isRouteInList } from "@/config/routes";
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Skip middleware for static/API routes
-  if (ignoreRoutes.some((route) => pathname.startsWith(route))) {
+  if (IGNORE_PREFIXES.some((p) => pathname.startsWith(p))) {
     return NextResponse.next();
   }
 
-  // Check refresh token cookie (httpOnly cookie) - common variations
-  const allCookies = Array.from(request.cookies.getAll());
-  const hasRefreshToken =
-    request.cookies.has("refresh_token") ||
-    request.cookies.has("refreshToken") ||
-    request.cookies.has("refresh") ||
-    allCookies.some(
-      (cookie) =>
-        cookie.name.toLowerCase().includes("refresh") &&
-        cookie.value &&
-        cookie.value.trim() !== "" &&
-        cookie.value !== "undefined" &&
-        cookie.value !== "null"
-    );
+  const isPublic = isRouteInList(pathname, PUBLIC_ROUTES);
 
-  // Is current path a public auth route?
-  const isPublicRoute = publicRoutes.some(
-    (route) => pathname === route || pathname.startsWith(route + "/")
-  );
+  // must exist with Path="/"
+  const hasRefresh = Boolean(request.cookies.get("refresh_token")?.value);
 
-  // If user is on a public route and already authenticated -> redirect
-  if (isPublicRoute && hasRefreshToken) {
+  // logged-in users should not see /login etc
+  if (isPublic && hasRefresh) {
     return NextResponse.redirect(new URL("/overview", request.url));
   }
 
-  // If not authenticated and trying to access non-public route -> redirect to login
-  if (!isPublicRoute && !hasRefreshToken) {
-    // allow root to go to login as well
-    return NextResponse.redirect(
-      new URL(`/login?redirect=${encodeURIComponent(pathname)}`, request.url)
-    );
-  }
-
-  // Root path redirect (optional, but keeps behavior explicit)
-  if (pathname === "/") {
-    if (hasRefreshToken) {
-      return NextResponse.redirect(new URL("/overview", request.url));
-    }
-    return NextResponse.redirect(new URL("/login", request.url));
+  // protect everything except public routes
+  if (!isPublic && !hasRefresh) {
+    const loginUrl = new URL("/login", request.url);
+    loginUrl.searchParams.set("redirect", pathname);
+    return NextResponse.redirect(loginUrl);
   }
 
   return NextResponse.next();

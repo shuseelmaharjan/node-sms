@@ -1,11 +1,12 @@
-import { LoadingState } from "@/components/ui/LoadingState";
+import { Spinner } from "@/components/ui/spinner";
 
 export default function Loading() {
   return (
-    <LoadingState
-      title="Loading your workspace…"
-      subtitle="Setting things up"
-      variant="page"
-    />
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="flex items-center gap-2">
+        <Spinner />
+        <span className="text-sm">Loading...</span>
+      </div>
+    </div>
   );
 }
