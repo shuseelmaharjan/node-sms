@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth";
 
@@ -26,22 +26,27 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
   const router = useRouter();
   const searchParams = useSearchParams();
   const { isLoading, isAuthenticated } = useAuth();
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   useEffect(() => {
-    if (isLoading) return;
+    if (isLoading || isRedirecting) return;
 
     if (isAuthenticated) {
-      const redirect = searchParams.get("redirect");
-      router.replace(redirect || "/overview");
-      // router.refresh(); // optional: usually not needed
+      setIsRedirecting(true);
+      const redirect = searchParams.get("redirect") || "/overview";
+      
+      // Use window.location for a full page refresh to ensure middleware sees cookies
+      setTimeout(() => {
+        window.location.href = redirect;
+      }, 100);
     }
-  }, [isAuthenticated, isLoading, router, searchParams]);
+  }, [isAuthenticated, isLoading, searchParams, isRedirecting]);
 
   // While auth is being checked, show a single consistent loading UI
   if (isLoading) return <AuthGate label="Checking authentication…" />;
 
   // If authenticated, we’re redirecting: show a lightweight redirect gate
-  if (isAuthenticated) return <AuthGate label="Redirecting…" />;
+  if (isAuthenticated || isRedirecting) return <AuthGate label="Redirecting…" />;
 
   // Not authenticated: show login page
   return (

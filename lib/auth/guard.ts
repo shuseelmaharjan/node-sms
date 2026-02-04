@@ -1,33 +1,38 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuthStore } from "./store";
 
-// Routes that don't require authentication
-const PUBLIC_ROUTES = ["/login"];
+// keep in sync with middleware + ConditionalLayout
+const PUBLIC_ROUTES = ["/login", "/register", "/forget-password"];
 
 export function useAuthGuard() {
   const { accessToken, user, hydrated, sessionValid } = useAuthStore();
   const router = useRouter();
   const pathname = usePathname();
+
   const [isChecking, setIsChecking] = useState(true);
 
   const isAuthenticated = Boolean(accessToken && user && sessionValid);
-  const isPublicRoute = PUBLIC_ROUTES.some(route => pathname.startsWith(route));
+
+  const isPublicRoute = useMemo(() => {
+    return PUBLIC_ROUTES.some(
+      (route) => pathname === route || pathname.startsWith(route + "/")
+    );
+  }, [pathname]);
 
   useEffect(() => {
-  if (!hydrated) return;
+    if (!hydrated) return;
 
-  if (!isPublicRoute && !isAuthenticated) {
-    router.replace(`/login?redirect=${encodeURIComponent(pathname)}`);
-    router.refresh();
-    return;
-  }
+    if (!isPublicRoute && !isAuthenticated) {
+      router.replace(`/login?redirect=${encodeURIComponent(pathname)}`);
+      setIsChecking(false);
+      return;
+    }
 
-  setIsChecking(false);
-}, [hydrated, isPublicRoute, isAuthenticated, pathname, router]);
-
+    setIsChecking(false);
+  }, [hydrated, isPublicRoute, isAuthenticated, pathname, router]);
 
   return {
     isAuthenticated,

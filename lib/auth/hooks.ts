@@ -1,71 +1,58 @@
 "use client";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { useQueryClient } from "@tanstack/react-query";
-import { useAuthStore } from "@/lib/auth/store";
-import { login as authLogin, logout as authLogout, bootstrapSession } from "@/lib/auth/session";
-import { useConfirmation } from "@/components/ui/confirmation-modal";
+import { useEffect, useMemo, useState } from "react";
+import { useRouter, usePathname } from "next/navigation";
+import { useAuthStore } from "./store";
+import { login as loginSession, logout as logoutSession } from "./session";
+
+// keep in sync with middleware + ConditionalLayout
+const PUBLIC_ROUTES = ["/login", "/register", "/forget-password"];
 
 export function useAuth() {
-  const { accessToken, user, hydrated, isInitialized, sessionValid } = useAuthStore();
-  const { showConfirmation } = useConfirmation();
-  const router = useRouter();
-  const queryClient = useQueryClient();
-
-  // User is authenticated if they have both access token AND user data
-  const isAuthenticated = Boolean(accessToken && user && sessionValid);
-  
-  // Loading only during initial hydration/initialization
-  const isLoading = !hydrated || !isInitialized;
-
-  // Debug logging
-  useEffect(() => {
-    console.log('useAuth state change:', {
-      hasToken: Boolean(accessToken),
-      hasUser: Boolean(user), 
-      sessionValid,
-      isAuthenticated,
-      isLoading,
-      hydrated,
-      isInitialized
-    });
-  }, [accessToken, user, sessionValid, isAuthenticated, isLoading, hydrated, isInitialized]);
-
-  // Initialize auth on first mount
-  useEffect(() => {
-    if (!isInitialized) {
-      console.log('useAuth: Initializing auth...');
-      bootstrapSession();
-    }
-  }, [isInitialized]);
-
-  // Custom logout with modal confirmation
-  const logout = async () => {
-    const confirmed = await showConfirmation({
-      title: "Sign Out",
-      description: "Are you sure you want to sign out? You will need to log in again to access your account.",
-      confirmText: "Sign Out",
-      cancelText: "Cancel",
-      variant: "destructive"
-    });
-    
-    if (confirmed) {
-      await authLogout(true, router, queryClient); // Pass queryClient for cleanup
-    }
-  };
+  const { user, accessToken, sessionValid, hydrated } = useAuthStore();
 
   return {
-    // State
     user,
     accessToken,
-    isAuthenticated,
-    isLoading,
     sessionValid,
-    
-    // Actions
-    login: authLogin,
-    logout,
-    logoutWithoutConfirmation: () => authLogout(true, router, queryClient), // Skip confirmation, use router and queryClient
+    isAuthenticated: Boolean(accessToken && user && sessionValid),
+    isLoading: !hydrated,
+    login: loginSession,
+    logout: logoutSession,
+  };
+}
+
+export function useAuthGuard() {
+  const { accessToken, user, hydrated, sessionValid } = useAuthStore();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const [isChecking, setIsChecking] = useState(true);
+
+  const isAuthenticated = Boolean(accessToken && user && sessionValid);
+
+  const isPublicRoute = useMemo(() => {
+    return PUBLIC_ROUTES.some(
+      (route) => pathname === route || pathname.startsWith(route + "/")
+    );
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!hydrated) return;
+
+    if (!isPublicRoute && !isAuthenticated) {
+      router.replace(`/login?redirect=${encodeURIComponent(pathname)}`);
+      setIsChecking(false);
+      return;
+    }
+
+    setIsChecking(false);
+  }, [hydrated, isPublicRoute, isAuthenticated, pathname, router]);
+
+  return {
+    isAuthenticated,
+    isChecking: !hydrated || isChecking,
+    isPublicRoute,
+    user,
   };
 }

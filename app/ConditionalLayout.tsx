@@ -6,16 +6,26 @@ import { DashboardLayout } from "@/layout";
 
 export function ConditionalLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  
-  // Routes that should not have dashboard layout (auth routes, debug routes, api routes)
-  const publicRoutes = ["/login", "/register", "/debug-auth", "/debug-cookies", "/api"];
-  const isPublicRoute = publicRoutes.some(route => pathname.startsWith(route)) || pathname.startsWith("/api/");
-  
+
+  // Routes that should NOT have dashboard layout or auth protection
+  const publicRoutes = [
+    "/login",
+    "/register",
+    "/forget-password",
+    "/debug-auth",
+    "/debug-cookies",
+  ];
+
+  const isPublicRoute =
+    publicRoutes.some(
+      (route) => pathname === route || pathname.startsWith(route + "/")
+    ) || pathname.startsWith("/api");
+
   if (isPublicRoute) {
     return <>{children}</>;
   }
 
-  // Apply dashboard layout to all other routes
+  // All other routes require authentication + dashboard layout
   return (
     <RequireAuth>
       <DashboardLayout>{children}</DashboardLayout>

@@ -9,24 +9,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <head>
-        {/* <link
-          rel="stylesheet"
-          href="https://nepalidatepicker.sajanmaharjan.com.np/v5/nepali.datepicker/css/nepali.datepicker.v5.0.6.min.css"
-        /> */}
         <link
           rel="stylesheet"
-          href="/dist/nepali.datepicker.v5.0.6.min.css"
+          href="https://nepalidatepicker.sajanmaharjan.com.np/v5/nepali.datepicker/css/nepali.datepicker.v5.0.6.min.css"
         />
       </head>
 
       <body className="antialiased">
-        {/* <Script
-          src="https://nepalidatepicker.sajanmaharjan.com.np/v5/nepali.datepicker/js/nepali.datepicker.v5.0.6.min.js"
-          strategy="afterInteractive"
-        /> */}
         <Script
-          src="/dist/nepali.datepicker.v5.0.6.min.js"
-          strategy="afterInteractive"
+          src="https://nepalidatepicker.sajanmaharjan.com.np/v5/nepali.datepicker/js/nepali.datepicker.v5.0.6.min.js"
+          strategy="lazyOnload"
         />
 
         <Providers>

@@ -33,6 +33,24 @@ export const api = axios.create({
   baseURL: API_BASE_URL,
   withCredentials: true,
   headers: { "X-Client-Type": "web" },
+  transformResponse: [
+    (data, headers) => {
+      // If we got HTML when expecting JSON, throw a specific error
+      if (typeof data === 'string' && data.trim().startsWith('<')) {
+        console.error('API returned HTML instead of JSON. Check backend URL and routing.');
+        throw new Error('AUTH_HTML_RESPONSE');
+      }
+      // Try to parse JSON
+      if (typeof data === 'string') {
+        try {
+          return JSON.parse(data);
+        } catch (e) {
+          return data;
+        }
+      }
+      return data;
+    },
+  ],
 });
 
 // IMPORTANT: make sure we do NOT have a forced JSON content-type on posts
@@ -120,6 +138,20 @@ api.interceptors.response.use(
     return response;
   },
   async (error: AxiosError) => {
+    // Check if this is an HTML response error
+    if (error.message === 'AUTH_HTML_RESPONSE') {
+      const store = useAuthStore.getState();
+      store.clear();
+      
+      if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/login')) {
+        toast.error('Connection Error', { 
+          description: 'Unable to reach the server. Please check your connection.' 
+        });
+      }
+      
+      return Promise.reject(error);
+    }
+    
     const originalRequest = error.config as any;
     const isAuthEndpoint = originalRequest?.url?.includes("/api/auth/");
 
