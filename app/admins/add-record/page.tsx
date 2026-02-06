@@ -1,3 +1,4 @@
+// app/admins/add-record/page.tsx
 import { AdminsCreatePage } from "@/modules/admins/components/admins-create-page";
 
 export default function Page() {

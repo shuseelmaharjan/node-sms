@@ -1,4 +1,3 @@
-// modules/admin/schema/onboarding-admin.schema.ts
 import { z } from "zod";
 
 const phoneRegex = /^[0-9+]{7,20}$/;
@@ -38,7 +37,6 @@ const profileSchema = z.object({
   pan_no: z.string().min(1, "PAN no is required"),
 });
 
-// Shared optional fields
 const addressCommon = {
   id: z.string().optional(),
   province: z.string(),
@@ -53,7 +51,6 @@ const addressCommon = {
   is_primary: z.boolean().default(false),
 };
 
-// Permanent: required
 const permanentAddressSchema = z.object({
   address_type: z.literal("permanent"),
   ...addressCommon,
@@ -65,12 +62,10 @@ const permanentAddressSchema = z.object({
   if (!val.tole) ctx.addIssue({ code: "custom", path: ["tole"], message: "Tole is required" });
 });
 
-// Temporary: allow blank
 const temporaryAddressSchema = z.object({
   address_type: z.literal("temporary"),
   ...addressCommon,
 }).superRefine((val, ctx) => {
-  // If user starts filling temporary, then require the main fields
   const started =
     Boolean(val.province || val.district || val.municipality || val.ward_no || val.tole);
 
@@ -88,11 +83,21 @@ const addressSchema = z.discriminatedUnion("address_type", [
   temporaryAddressSchema,
 ]);
 
+// ✅ UPDATED: keep document record IDs for PUT
 const documentsSchema = z.object({
+  photo_id: z.string().optional(),
   photo_file: z.string().min(1, "Photo is required"),
+
+  citizenship_front_id: z.string().optional(),
   citizenship_front_file: z.string().min(1, "Citizenship (front) is required"),
+
+  citizenship_back_id: z.string().optional(),
   citizenship_back_file: z.string().min(1, "Citizenship (back) is required"),
+
+  pan_id: z.string().optional(),
   pan_file: z.string().min(1, "PAN file is required"),
+
+  signature_id: z.string().optional(),
   signature_file: z.string().min(1, "Signature is required"),
 });
 
@@ -100,8 +105,6 @@ export const onboardingAdminSchema = z.object({
   user: userSchema,
   school: schoolSchema,
   profile: profileSchema,
-  // Keep length(2) because your form state always has 2 objects,
-  // but temporary can now be blank safely.
   addresses: z.array(addressSchema).length(2, "Must include permanent and temporary address"),
   documents: documentsSchema,
 });

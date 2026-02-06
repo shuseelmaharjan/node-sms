@@ -9,7 +9,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import NepaliDate from "nepali-date-converter";
 
-import { api } from "@/api/client"; // CHANGE THIS if your export path is different
+import { api } from "@/api"; // CHANGE THIS if your export path is different
 import { FormWizard } from "@/components/form/FormWizard";
 import { Button } from "@/components/ui/button";
 import { InputField } from "@/components/fields/InputField";
@@ -107,13 +107,19 @@ const createDefaults: OnboardingAdminValues = {
     },
   ],
   documents: {
+    photo_id: "",
     photo_file: "",
+    citizenship_front_id: "",
     citizenship_front_file: "",
+    citizenship_back_id: "",
     citizenship_back_file: "",
+    pan_id: "",
     pan_file: "",
+    signature_id: "",
     signature_file: "",
   },
 };
+
 
 function pickAddress(entity: OnboardingAdminEntity, type: "permanent" | "temporary") {
   const a = entity.addresses?.find((x) => x.address_type === type);
@@ -166,29 +172,43 @@ function toDefaults(entity: OnboardingAdminEntity): OnboardingAdminValues {
       pan_no: entity.profile?.pan_no ?? "",
     },
     addresses: [pickAddress(entity, "permanent"), pickAddress(entity, "temporary")],
+
+    // ✅ keep document IDs + file IDs
     documents: {
+      photo_id: entity.documents?.photo?.id ?? "",
       photo_file: entity.documents?.photo?.file?.id ?? "",
+
+      citizenship_front_id: entity.documents?.citizenship_front?.id ?? "",
       citizenship_front_file: entity.documents?.citizenship_front?.file?.id ?? "",
+
+      citizenship_back_id: entity.documents?.citizenship_back?.id ?? "",
       citizenship_back_file: entity.documents?.citizenship_back?.file?.id ?? "",
+
+      pan_id: entity.documents?.pan?.id ?? "",
       pan_file: entity.documents?.pan?.file?.id ?? "",
+
+      signature_id: entity.documents?.signature?.id ?? "",
       signature_file: entity.documents?.signature?.file?.id ?? "",
     },
   };
 }
+
 function isTemporaryAddressFilled(a: any) {
   if (!a) return false;
   return Boolean(a.province || a.district || a.municipality || a.ward_no || a.tole);
 }
 
-function docObj(fileId: string, issuedDate?: string) {
+function docObj(fileId: string, issuedDate?: string, id?: string) {
   return {
+    ...(id ? { id } : {}),
     file: fileId,
     remarks: "",
     issued_by: "",
-    issued_date: issuedDate || "",   // backend often expects date string
-    expiry_date: issuedDate || "",   // same
+    issued_date: issuedDate || "",
+    expiry_date: issuedDate || "",
   };
 }
+
 
 function toPayload(values: OnboardingAdminValues) {
   const issuedDate = values.profile.date_of_birth_ad || "";
@@ -235,7 +255,7 @@ function toPayload(values: OnboardingAdminValues) {
     },
     profile: {
       date_of_birth_ad: values.profile.date_of_birth_ad,
-      date_of_birth_bs: values.profile.date_of_birth_bs || "", // ✅ send BS too
+      date_of_birth_bs: values.profile.date_of_birth_bs || "",
       gender: values.profile.gender,
       blood_group: values.profile.blood_group,
       nationality: values.profile.nationality,
@@ -246,14 +266,16 @@ function toPayload(values: OnboardingAdminValues) {
     },
     addresses,
     documents: {
-      photo: docObj(values.documents.photo_file, issuedDate),
-      citizenship_front: docObj(values.documents.citizenship_front_file, issuedDate),
-      citizenship_back: docObj(values.documents.citizenship_back_file, issuedDate),
-      pan: docObj(values.documents.pan_file, issuedDate),
-      signature: docObj(values.documents.signature_file, issuedDate),
+      // ✅ include document ids on PUT
+      photo: docObj(values.documents.photo_file, issuedDate, values.documents.photo_id || undefined),
+      citizenship_front: docObj(values.documents.citizenship_front_file, issuedDate, values.documents.citizenship_front_id || undefined),
+      citizenship_back: docObj(values.documents.citizenship_back_file, issuedDate, values.documents.citizenship_back_id || undefined),
+      pan: docObj(values.documents.pan_file, issuedDate, values.documents.pan_id || undefined),
+      signature: docObj(values.documents.signature_file, issuedDate, values.documents.signature_id || undefined),
     },
   };
 }
+
 
 
 export function AdminsFormPage(props: { mode: "create" | "edit" }) {

@@ -1,3 +1,4 @@
+// components/form/ImagePickerField.tsx
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -88,20 +89,21 @@ export function ImagePickerField({
 
   // Reset preview when value becomes null (form reset)
   useEffect(() => {
-    if (value === null) {
+    // treat "", null, undefined all as empty
+    if (!value) {
       setPreviewUrl(initialUri ?? null);
-      
+
       if (objectUrlRef.current) {
         URL.revokeObjectURL(objectUrlRef.current);
         objectUrlRef.current = null;
       }
-      
-      // Clear the file input
+
       if (inputRef.current) {
         inputRef.current.value = "";
       }
     }
   }, [value, initialUri]);
+
 
   // backend paths
   const uploadUrl = "/api/v1/files/upload/";
@@ -242,7 +244,7 @@ export function ImagePickerField({
   const handleRemove = useCallback(async () => {
     const id = value ?? null;
 
-    onChange(null);
+    onChange("");
     setPreviewUrl(null);
 
     if (inputRef.current) inputRef.current.value = "";
