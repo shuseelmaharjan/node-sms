@@ -1,4 +1,5 @@
-"use client";
-export default function ManageClassroomIndexPage() {
-  return <div>Manage Classroom Index Page</div>;
+import { ClassroomsPage } from "@/modules/academics/components/classrooms-page";
+
+export default function ClassroomsIndexPage() {
+  return <ClassroomsPage />;
 }
