@@ -18,33 +18,33 @@ import type { UserRole } from "@/router/routes";
 // ---------- Types ----------
 export type NavChild =
   | {
-      label: string;
-      href: string;
-      roles?: UserRole[];
-      exactMatch?: boolean;
-      match?: Array<string | RegExp>;
-    }
+    label: string;
+    href: string;
+    roles?: UserRole[];
+    exactMatch?: boolean;
+    match?: Array<string | RegExp>;
+  }
   | {
-      label: string;
-      roles?: UserRole[];
-      children: NavChild[];
-    };
+    label: string;
+    roles?: UserRole[];
+    children: NavChild[];
+  };
 
 export type NavItem =
   | {
-      label: string;
-      icon: LucideIcon;
-      href: string;
-      roles?: UserRole[];
-      exactMatch?: boolean;
-      match?: Array<string | RegExp>;
-    }
+    label: string;
+    icon: LucideIcon;
+    href: string;
+    roles?: UserRole[];
+    exactMatch?: boolean;
+    match?: Array<string | RegExp>;
+  }
   | {
-      label: string;
-      icon: LucideIcon;
-      roles?: UserRole[];
-      children: NavChild[];
-    };
+    label: string;
+    icon: LucideIcon;
+    roles?: UserRole[];
+    children: NavChild[];
+  };
 
 // ---------- Config ----------
 export const navconfig: NavItem[] = [
@@ -61,105 +61,119 @@ export const navconfig: NavItem[] = [
     label: "Admins",
     icon: Users,
     href: "/admins",
-    roles: ["superadmin", "admin"],
+    roles: ["superadmin"],
   },
 
   // Organizations: superadmin/admin
   {
     label: "Organizations",
     icon: Building,
-    roles: ["superadmin", "admin"],
+    roles: ["superadmin"],
     children: [
-      { label: "Schools", href: "/schools", roles: ["superadmin", "admin"] },
-      { label: "School Settings", href: "/school-settings", roles: ["superadmin", "admin"] },
+      { label: "Schools", href: "/schools", roles: ["superadmin"] },
+      { label: "School Settings", href: "/school-settings", roles: ["superadmin"] },
+    ],
+  },
+  // Academics: broader permissions
+  {
+    label: "Academics",
+    icon: GraduationCap,
+    roles: ["admin", "principal"],
+    children: [
+      { label: "Academic Year", href: "/academic-year", roles: ["admin", "principal"] },
+      { label: "Manage Classrooms", href: "/manage-classroom", roles: ["admin", "principal"] },
+      {label: "Manage Sections", href: "/manage-sections", roles: ["admin", "principal"]},
     ],
   },
 
   // Roles & Permissions: superadmin only
-  {
-    label: "Roles & Permissions",
-    icon: UserCheck2,
-    roles: ["superadmin"],
-    children: [
-      { label: "Roles", href: "/roles", roles: ["superadmin"] },
-      { label: "Add Role", href: "/roles/add", roles: ["superadmin"] },
-      { label: "Manage Permissions", href: "/roles/permissions", roles: ["superadmin"] },
-    ],
-  },
+  // {
+  //   label: "Roles & Permissions",
+  //   icon: UserCheck2,
+  //   roles: ["superadmin"],
+  //   children: [
+  //     { label: "Roles", href: "/roles", roles: ["superadmin"] },
+  //     { label: "Add Role", href: "/roles/add", roles: ["superadmin"] },
+  //     { label: "Manage Permissions", href: "/roles/permissions", roles: ["superadmin"] },
+  //   ],
+  // },
 
   // Students: broader permissions
-  {
-    label: "Students",
-    icon: Users,
-    roles: ["superadmin", "admin", "principal", "coordinator"],
-    children: [
-      { label: "All Students", href: "/students" },
-      { label: "Admissions", href: "/students/admissions", roles: ["superadmin", "admin"]},
-      { label: "Enrollments", href: "/students/enrollments", roles: ["superadmin", "admin"] },
-    ],
-  },
+  // {
+  //   label: "Students",
+  //   icon: Users,
+  //   roles: ["superadmin", "admin", "principal", "coordinator"],
+  //   children: [
+  //     { label: "All Students", href: "/students" },
+  //     { label: "Admissions", href: "/students/admissions", roles: ["superadmin", "admin"]},
+  //     { label: "Enrollments", href: "/students/enrollments", roles: ["superadmin", "admin"] },
+  //   ],
+  // },
 
   // Courses: broader permissions  
-  {
-    label: "Courses",
-    icon: GraduationCap,
-    roles: ["superadmin", "admin", "principal", "teacher", "coordinator"],
-    children: [
-      { label: "All Courses", href: "/courses" },
-      { label: "Course Management", href: "/courses/manage", roles: ["superadmin", "admin", "principal"] },
-      { label: "Assignments", href: "/courses/assignments", roles: ["superadmin", "admin", "teacher"] },
-    ],
-  },
+  // {
+  //   label: "Courses",
+  //   icon: GraduationCap,
+  //   roles: ["superadmin", "admin", "principal", "teacher", "coordinator"],
+  //   children: [
+  //     { label: "All Courses", href: "/courses" },
+  //     { label: "Course Management", href: "/courses/manage", roles: ["superadmin", "admin", "principal"] },
+  //     { label: "Assignments", href: "/courses/assignments", roles: ["superadmin", "admin", "teacher"] },
+  //   ],
+  // },
 
   // Faculty: broader permissions
-  {
-    label: "Faculty",
-    icon: UserCheck,
-    roles: ["superadmin", "admin", "principal", "coordinator"],
-    children: [
-      { label: "All Faculty", href: "/faculty" },
-      { label: "Departments", href: "/faculty/departments" },
-      { label: "Schedule", href: "/faculty/schedule" },
-    ],
-  },
+  // {
+  //   label: "Faculty",
+  //   icon: UserCheck,
+  //   roles: ["superadmin", "admin", "principal", "coordinator"],
+  //   children: [
+  //     { label: "All Faculty", href: "/faculty" },
+  //     { label: "Departments", href: "/faculty/departments" },
+  //     { label: "Schedule", href: "/faculty/schedule" },
+  //   ],
+  // },
 
   // Library: broader permissions
-  {
-    label: "Library",
-    icon: BookOpen,
-    href: "/library",
-    roles: ["superadmin", "admin", "principal"],
-  },
+  // {
+  //   label: "Library",
+  //   icon: BookOpen,
+  //   href: "/library",
+  //   roles: ["superadmin", "admin", "principal"],
+  // },
 
   // Attendance: broader permissions
-  {
-    label: "Attendance",
-    icon: Calendar,
-    href: "/attendance",
-    roles: ["superadmin", "admin", "principal", "teacher", "coordinator"],
-  },
+  // {
+  //   label: "Attendance",
+  //   icon: Calendar,
+  //   href: "/attendance",
+  //   roles: ["superadmin", "admin", "principal", "teacher", "coordinator"],
+  // },
 
   // Reports: broader permissions
-  {
-    label: "Reports",
-    icon: BarChart3,
-    roles: ["superadmin", "admin", "principal", "accountant"],
-    children: [
-      { label: "Student Reports", href: "/reports/students" },
-      { label: "Academic Reports", href: "/reports/academic" },
-      { label: "Financial Reports", href: "/reports/financial", roles: ["superadmin", "admin", "accountant"] },
-    ],
-  },
+  // {
+  //   label: "Reports",
+  //   icon: BarChart3,
+  //   roles: ["superadmin", "admin", "principal", "accountant"],
+  //   children: [
+  //     { label: "Student Reports", href: "/reports/students" },
+  //     { label: "Academic Reports", href: "/reports/academic" },
+  //     { label: "Financial Reports", href: "/reports/financial", roles: ["superadmin", "admin", "accountant"] },
+  //   ],
+  // },
 
   // Settings
   {
     label: "Settings",
     icon: Settings,
-    roles: ["superadmin", "admin"],
-    children: [
-      { label: "General", href: "/settings/general" },
-      { label: "Security", href: "/settings/security" },
-      { label: "Change Password", href: "/settings/change-password" },
-    ],
+    // roles: ["superadmin", "admin"],
+    href: "/settings",
+    exactMatch: true,
+
+    // children: [
+    //   { label: "General", href: "/settings/general" },
+    //   { label: "Security", href: "/settings/security" },
+    //   { label: "Change Password", href: "/settings/change-password" },
+    // ],
   },
 ];

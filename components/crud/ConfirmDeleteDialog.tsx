@@ -24,6 +24,7 @@ type ConfirmDeleteDialogProps = {
   cancelLabel?: string;
 
   loading?: boolean;
+  confirmDisabled?: boolean;
   onConfirm: () => void | Promise<void>;
 };
 
@@ -34,8 +35,7 @@ export function ConfirmDeleteDialog({
   description = "This action can’t be undone.",
   confirmLabel = "Delete",
   cancelLabel = "Cancel",
-  loading = false,
-  onConfirm,
+  loading = false,  confirmDisabled = false,  onConfirm,
 }: ConfirmDeleteDialogProps) {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
@@ -52,13 +52,15 @@ export function ConfirmDeleteDialog({
               e.preventDefault();
               onConfirm();
             }}
-            disabled={loading}
+            disabled={loading || confirmDisabled}
           >
             {loading ? (
               <div className="flex items-center gap-2">
                 <Spinner />
                 <span className="text-sm">Deleting...</span>
               </div>
+            ) : confirmDisabled ? (
+              <span className="text-sm opacity-50">{confirmLabel}</span>
             ) : (
               confirmLabel
             )}

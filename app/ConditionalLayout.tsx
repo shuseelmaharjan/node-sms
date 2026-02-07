@@ -1,25 +1,22 @@
+// app/ConditionalLayout.tsx
 "use client";
 
 import * as React from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { RequireAuth } from "@/lib/auth/components";
 import { DashboardLayout } from "@/layout";
-import { isIgnoredPath, isPublicPath, isKnownPrivateRoute } from "@/router/routes";
+import { isIgnoredPath, isPublicPath, isSystemPath, isKnownPrivateRoute } from "@/router/routes";
 import { useAuthStore } from "@/lib/auth/store";
 import { Spinner } from "@/components/ui/spinner";
 
 export function ConditionalLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const router = useRouter();
   const { hydrated } = useAuthStore();
 
-  // ignore next internals / api etc
   if (isIgnoredPath(pathname)) return <>{children}</>;
-
-  // public pages no auth layout
   if (isPublicPath(pathname)) return <>{children}</>;
+  if (isSystemPath(pathname)) return <>{children}</>;
 
-  // Wait for auth to be hydrated before checking routes
   if (!hydrated) {
     return (
       <div className="min-h-screen flex items-center justify-center gap-2">
@@ -29,13 +26,9 @@ export function ConditionalLayout({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // if not matched to any private route rule => 404
-  if (!isKnownPrivateRoute(pathname)) {
-    router.replace("/not-found");
-    return null;
-  }
+  // If unknown, let Next handle it
+  if (!isKnownPrivateRoute(pathname)) return <>{children}</>;
 
-  // private pages: auth + role + dashboard layout
   return (
     <RequireAuth>
       <DashboardLayout>{children}</DashboardLayout>

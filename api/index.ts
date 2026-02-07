@@ -1,3 +1,4 @@
+// api/index.ts
 // Main API client (centralized with auth)
 export { api } from "./client";
 

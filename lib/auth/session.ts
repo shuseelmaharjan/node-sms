@@ -12,10 +12,13 @@ export async function bootstrapSession() {
   const store = useAuthStore.getState();
 
   try {
-    // If already ready, don't re-bootstrap
-    if (store.accessToken && store.user && store.sessionValid) return;
+    // If already bootstrapped + valid, skip
+    if (store.bootstrapped && store.accessToken && store.user && store.sessionValid) return;
 
-    // 1) Refresh (requires httpOnly refresh cookie)
+    // Mark: bootstrapping started (not finished yet)
+    store.setBootstrapped(false);
+
+    // 1) Refresh (httpOnly cookie required)
     const refreshRes = await authApi.refresh();
     if (!refreshRes?.accessToken) {
       store.clear();
@@ -31,15 +34,17 @@ export async function bootstrapSession() {
       store.setUser(me.user);
       store.setSessionValid(true);
 
-      // Optional: backend sometimes returns new accessToken in /me
       if (me.accessToken) store.setAccessToken(me.accessToken);
     } else {
       store.clear();
+      return;
     }
   } catch {
     store.clear();
   } finally {
-    store.setHydrated(true);
+    // ✅ session check completed (success OR fail)
+    useAuthStore.getState().setBootstrapped(true);
+    useAuthStore.getState().setHydrated(true);
     bootstrapping = false;
   }
 }
@@ -52,6 +57,7 @@ export async function login(identifier: string, password: string) {
   store.setUser(data.user);
   store.setSessionValid(true);
   store.setHydrated(true);
+  store.setBootstrapped(true); // ✅ after login, session is ready
 
   toast.success(data.message || "Signed in successfully");
   return data;
@@ -63,7 +69,7 @@ export async function logout() {
   try {
     await authApi.logout();
   } catch {
-    // ignore - still clear locally
+    // ignore
   } finally {
     store.clear();
     toast.success("Signed out successfully");

@@ -1,8 +1,10 @@
+// app/layout.tsx
 import { Providers } from "./providers";
 import { ConditionalLayout } from "./ConditionalLayout";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import Script from "next/script";
+// import "date-picker-np/dist/style.css";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -17,7 +19,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="antialiased">
         <Script
           src="https://nepalidatepicker.sajanmaharjan.com.np/v5/nepali.datepicker/js/nepali.datepicker.v5.0.6.min.js"
-          strategy="lazyOnload"
+          strategy="afterInteractive"
         />
 
         <Providers>

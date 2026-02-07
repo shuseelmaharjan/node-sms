@@ -171,7 +171,8 @@ export function DataTable<T>({
   const searchEnabled =
     (toolbar?.search?.enabled ?? true) &&
     Boolean(toolbar?.search) &&
-    searchable.length > 0;
+    (searchable.length > 0 || Boolean(toolbar?.search?.placeholder));
+
 
   const searchValue = toolbar?.search?.value ?? "";
   const onSearchChange = toolbar?.search?.onChange;
@@ -191,10 +192,9 @@ export function DataTable<T>({
                 onChange={(e) => onSearchChange?.(e.target.value)}
                 placeholder={
                   toolbar?.search?.placeholder ??
-                  (searchable.length
-                    ? `Search: ${searchable.join(", ")}`
-                    : "Search…")
+                  (searchable.length ? `Search: ${searchable.join(", ")}` : "Search…")
                 }
+
                 className={cn(
                   "pl-9 pr-9",
                   "h-10 sm:h-9",
@@ -360,7 +360,7 @@ export function DataTable<T>({
                     colSpan={colCount}
                     className="h-24 text-center text-muted-foreground"
                   >
-                    <Image src="/not-found.webp" alt="No data" width={150} height={150} className="mx-auto mb-2"/>
+                    <Image src="/not-found.webp" alt="No data" width={150} height={150} className="mx-auto mb-2" />
                     {emptyText}
                   </TableCell>
                 </TableRow>

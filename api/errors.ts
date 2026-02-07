@@ -1,3 +1,4 @@
+// api/errors.ts
 import axios from "axios";
 
 export type ApiError = { message: string };

@@ -1,6 +1,5 @@
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+// app/not-found.tsx
+import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertTriangle } from "lucide-react";
 
 export default function NotFound() {
@@ -14,13 +13,6 @@ export default function NotFound() {
             The page you're looking for doesn't exist or has been moved.
           </CardDescription>
         </CardHeader>
-        {/* <CardContent className="text-center">
-          <Button asChild>
-            <Link href="/overview">
-              Return to Dashboard
-            </Link>
-          </Button>
-        </CardContent> */}
       </Card>
     </div>
   );

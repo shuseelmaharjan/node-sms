@@ -1,6 +1,5 @@
 @import "tailwindcss";
 @import "tw-animate-css";
-
 @custom-variant dark (&:is(.dark *));
 
 /* Maps your CSS variables into Tailwind color tokens (keep this) */
@@ -192,3 +191,14 @@
   display: none !important;
 }
 
+/* globals.css */
+.ndp-container {
+  z-index: 999999 !important;
+  pointer-events: auto !important;
+}
+.ndp-nepali-calendar .selected,
+.ndp-nepali-calendar .active,
+.ndp-nepali-calendar .day:hover {
+  background: var(--primary) !important;
+  color: var(--primary-foreground) !important;
+}

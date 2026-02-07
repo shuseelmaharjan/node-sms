@@ -1,3 +1,4 @@
+// modules/auth/components/LoginForm.tsx
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
@@ -20,7 +21,8 @@ import { Spinner } from "@/components/ui/spinner";
 export default function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectTo = searchParams.get("redirect") || "/overview";
+  const redirectParam = searchParams.get("redirect");
+  const redirectTo = !redirectParam || redirectParam === "/" ? "/overview" : redirectParam;
 
   const { login } = useAuth();
   const [showPassword, setShowPassword] = useState(false);

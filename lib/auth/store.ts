@@ -15,13 +15,16 @@ export type User = {
 type AuthState = {
   accessToken: string | null; // memory
   user: User | null;          // persisted
-  hydrated: boolean;
+  hydrated: boolean;          // storage loaded
+  bootstrapped: boolean;      // ✅ session check finished
   sessionValid: boolean;
 
   setAccessToken: (t: string | null) => void;
   setUser: (u: User | null) => void;
   setHydrated: (v: boolean) => void;
+  setBootstrapped: (v: boolean) => void;
   setSessionValid: (v: boolean) => void;
+
   clear: () => void;
 };
 
@@ -30,12 +33,15 @@ export const useAuthStore = create<AuthState>()(
     (set) => ({
       accessToken: null,
       user: null,
+
       hydrated: false,
+      bootstrapped: false, // ✅ start false
       sessionValid: false,
 
       setAccessToken: (t) => set({ accessToken: t }),
       setUser: (u) => set({ user: u }),
       setHydrated: (v) => set({ hydrated: v }),
+      setBootstrapped: (v) => set({ bootstrapped: v }),
       setSessionValid: (v) => set({ sessionValid: v }),
 
       clear: () =>
@@ -43,6 +49,7 @@ export const useAuthStore = create<AuthState>()(
           accessToken: null,
           user: null,
           sessionValid: false,
+          bootstrapped: true, // ✅ bootstrap finished (failed)
           hydrated: true,
         }),
     }),
@@ -50,7 +57,11 @@ export const useAuthStore = create<AuthState>()(
       name: "auth-session",
       partialize: (state) => ({ user: state.user }),
       onRehydrateStorage: () => (state) => {
-        if (state) state.hydrated = true;
+        if (state) {
+          state.hydrated = true;
+          // ✅ do NOT mark bootstrapped here
+          // bootstrapSession will mark it after refresh/me completes
+        }
       },
     }
   )

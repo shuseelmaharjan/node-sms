@@ -1,3 +1,4 @@
+// lib/auth/AuthBootstrap.tsx
 "use client";
 
 import { useEffect } from "react";
