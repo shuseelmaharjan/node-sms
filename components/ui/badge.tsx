@@ -128,39 +128,36 @@ function normalizeVariant(value?: string | null): BadgeVariant {
     .replace(/[\s-]+/g, "_") as BadgeVariant
 }
 
-type BadgeProps = React.ComponentProps<"span"> &
+type BadgeProps = Omit<React.HTMLAttributes<HTMLElement>, "color"> &
   VariantProps<typeof badgeVariants> & {
-    asChild?: boolean
+    asChild?: boolean;
     /** If provided, overrides children text formatting */
-    label?: string
-  }
+    label?: string;
+  };
 
-function Badge({
-  className,
-  variant,
-  asChild = false,
-  label,
-  children,
-  ...props
-}: BadgeProps) {
-  const Comp = asChild ? Slot : "span"
+const Badge = React.forwardRef<HTMLElement, BadgeProps>(function Badge(
+  { className, variant, asChild = false, label, children, ...props },
+  ref
+) {
+  const Comp = asChild ? Slot : ("span" as any);
 
   const content =
     typeof label === "string"
       ? label
       : typeof children === "string"
         ? toTitleCase(children)
-        : children
+        : children;
 
   return (
     <Comp
+      ref={ref}
       data-slot="badge"
       className={cn(badgeVariants({ variant }), className)}
       {...props}
     >
       {content}
     </Comp>
-  )
-}
+  );
+});
 
-export { Badge, badgeVariants, normalizeVariant, toTitleCase }
+export { Badge, badgeVariants, normalizeVariant, toTitleCase };

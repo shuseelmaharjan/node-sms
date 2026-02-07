@@ -11,6 +11,7 @@ import {
   Settings,
   Building,
   UserCheck2,
+  HandCoins,
 } from "lucide-react";
 
 import type { UserRole } from "@/router/routes";
@@ -65,15 +66,15 @@ export const navconfig: NavItem[] = [
   },
 
   // Organizations: superadmin/admin
-  {
-    label: "Organizations",
-    icon: Building,
-    roles: ["superadmin"],
-    children: [
-      { label: "Schools", href: "/schools", roles: ["superadmin"] },
-      { label: "School Settings", href: "/school-settings", roles: ["superadmin"] },
-    ],
-  },
+  // {
+  //   label: "Organizations",
+  //   icon: Building,
+  //   roles: ["superadmin"],
+  //   children: [
+  //     { label: "Schools", href: "/schools", roles: ["superadmin"] },
+  //     { label: "School Settings", href: "/school-settings", roles: ["superadmin"] },
+  //   ],
+  // },
   // Academics: broader permissions
   {
     label: "Academics",
@@ -82,8 +83,23 @@ export const navconfig: NavItem[] = [
     children: [
       { label: "Academic Year", href: "/academic-year", roles: ["admin", "principal"] },
       { label: "Manage Classrooms", href: "/manage-classroom", roles: ["admin", "principal"] },
-      {label: "Manage Sections", href: "/manage-sections", roles: ["admin", "principal"]},
     ],
+  },
+  // Fee Head : Permission superadmin only
+  {
+    label: "Fee Head",
+    icon: UserCheck,
+    href: "/fee-head",
+    roles: ["superadmin"],
+    exactMatch: true,
+  },
+  // Fee Management : Permission admin and principal
+  {
+    label: "Fee Management",
+    icon: HandCoins,
+    href: "/fee-management",
+    roles: ["admin", "principal"],
+    exactMatch: true,
   },
 
   // Roles & Permissions: superadmin only
