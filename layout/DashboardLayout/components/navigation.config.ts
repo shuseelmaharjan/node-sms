@@ -104,11 +104,19 @@ export const navconfig: NavItem[] = [
   {
     label: "Enrollments",
     icon: Users,
-    roles: ["admin", "principal"],
+    roles: ["admin", "principal", "superadmin"],
     children: [
-      { label: "Student", href: "/student-enrollment" },
-      { label: "Teachers", href: "/teacher-enrollment" },
+      { label: "Student Enrollment", href: "/student-enrollment", roles:["admin", "principal"] },
+      { label: "Staff Enrollment", href: "/staff-enrollment", roles:["admin", "principal"] },
+      { label: "Teacher Positions", href: "/position-levels", roles: ["superadmin"] },
     ],
+  },
+  {
+    label: "Subjects",
+    icon: BookOpen,
+    href: "/subjects",
+    roles: ["superadmin"],
+    exactMatch: true,
   },
 
   // Roles & Permissions: superadmin only

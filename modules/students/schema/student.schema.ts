@@ -3,18 +3,26 @@ import { z } from "zod";
 
 const phoneRegex = /^[0-9+]{7,20}$/;
 
+const optionalPhoneSchema = z
+  .string()
+  .optional()
+  .default("")
+  .refine((v) => !v || phoneRegex.test(v), { message: "Invalid phone" });
+
+const optionalEmailSchema = z
+  .string()
+  .optional()
+  .default("")
+  .refine((v) => !v || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v), {
+    message: "Invalid email",
+  });
+
 const userSchema = z.object({
   first_name: z.string().min(1, "First name is required"),
   middle_name: z.string().optional().default(""),
   last_name: z.string().min(1, "Last name is required"),
   phone: z.string().min(1, "Phone is required").regex(phoneRegex, "Invalid phone"),
-  email: z
-    .string()
-    .optional()
-    .default("")
-    .refine((v) => !v || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v), {
-      message: "Invalid email",
-    }),
+  email: optionalEmailSchema,
 });
 
 const profileSchema = z.object({
@@ -31,8 +39,16 @@ const profileSchema = z.object({
 const guardiansSchema = z
   .object({
     father_name: z.string().optional().default(""),
+    father_phone: optionalPhoneSchema,
+    father_email: optionalEmailSchema,
+
     mother_name: z.string().optional().default(""),
+    mother_phone: optionalPhoneSchema,
+    mother_email: optionalEmailSchema,
+
     guardian_name: z.string().optional().default(""),
+    guardian_phone: optionalPhoneSchema,
+    guardian_email: optionalEmailSchema,
   })
   .superRefine((val, ctx) => {
     const anyFilled = Boolean(

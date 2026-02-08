@@ -1,9 +1,11 @@
+// modules/students/columns/student.columns.tsx
 "use client";
 
 import * as React from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { toSentenceCase } from "@/utils/text-utils";
 
 export type FileEntity = {
   id: string;
@@ -84,16 +86,36 @@ export function studentColumns(args: {
         );
       },
     },
+    // {
+    //   id: "email",
+    //   header: "Email",
+    //   enableSorting: true,
+    //   accessorFn: (row) => row.email || "",
+    //   cell: ({ row }) => (
+    //     <div className="max-w-[200px] truncate" title={row.original.email || ""}>
+    //       {row.original.email || "-"}
+    //     </div>
+    //   ),
+    // },
     {
-      id: "email",
-      header: "Email",
+      accessorKey: "username",
+      header: "Username",
       enableSorting: true,
-      accessorFn: (row) => row.email || "",
-      cell: ({ row }) => (
-        <div className="max-w-[200px] truncate" title={row.original.email || ""}>
-          {row.original.email || "-"}
-        </div>
-      ),
+      cell: ({ row }) => <span className="font-mono">{row.original.username ?? "-"}</span>,
+    },
+    {
+      accessorKey: "gender",
+      header: "Gender",
+      enableSorting: false,
+      cell: ({ row }) => <span>{row.original.profile
+        ? toSentenceCase(row.original.profile.gender) ?? "-"
+        : "-"}</span>,
+    },
+    {
+      accessorKey: "date_of_birth_in_bs",
+      header: "Date of Birth (B.S.)",
+      enableSorting: false,
+      cell: ({ row }) => <span className="font-mono">{row.original.profile?.date_of_birth_in_bs ?? "-"}</span>,
     },
     {
       accessorKey: "status",
@@ -104,12 +126,6 @@ export function studentColumns(args: {
         const isActive = v === "active";
         return <Badge variant={isActive ? "active" : "inactive"}>{row.original.status ?? "-"}</Badge>;
       },
-    },
-    {
-      accessorKey: "username",
-      header: "Username",
-      enableSorting: false,
-      cell: ({ row }) => <span className="font-mono">{row.original.username ?? "-"}</span>,
     },
     {
       id: "actions",

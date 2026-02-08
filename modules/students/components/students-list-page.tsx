@@ -1,3 +1,4 @@
+// modules/students/components/students-list-page.tsx
 "use client";
 
 import * as React from "react";
@@ -30,7 +31,7 @@ export function StudentsListPage() {
   const [deleteTarget, setDeleteTarget] = React.useState<StudentEntity | null>(null);
 
   const [q, setQ] = React.useState("");
-  const [statusFilter, setStatusFilter] = React.useState<string>("active");
+  const [statusFilter, setStatusFilter] = React.useState<string>("draft");
   const [pageIndex, setPageIndex] = React.useState(0);
   const [pageSize, setPageSize] = React.useState(10);
 
@@ -139,20 +140,20 @@ export function StudentsListPage() {
               enabled: searchEnabled,
               placeholder: "Search",
             },
-            filters: {
-              status_filter: {
-                value: statusFilter,
-                onChange: setStatusFilter,
-                options: [
-                  { value: "active", label: "Active" },
-                  { value: "deactive", label: "Deactive" },
-                  { value: "all", label: "All" },
-                ],
-                placeholder: "Filter by status",
-                label: "Status",
-                icon: <Filter className="h-4 w-4" />,
-              },
-            },
+            // filters: {
+            //   status_filter: {
+            //     value: statusFilter,
+            //     onChange: setStatusFilter,
+            //     options: [
+            //       { value: "active", label: "Active" },
+            //       { value: "deactive", label: "Deactive" },
+            //       { value: "all", label: "All" },
+            //     ],
+            //     placeholder: "Filter by status",
+            //     label: "Status",
+            //     icon: <Filter className="h-4 w-4" />,
+            //   },
+            // },
             actions: <AddActionButton add={addAction} />,
           }}
           refresh={{

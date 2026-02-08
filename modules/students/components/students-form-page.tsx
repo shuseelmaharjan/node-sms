@@ -39,6 +39,7 @@ function normalizePhoneForForm(phone?: string | null) {
   if (!phone) return "";
   return String(phone).replace(/^\+977/, "").trim();
 }
+
 function formatPhoneForApi(phone: string) {
   const raw = (phone ?? "").trim();
   if (!raw) return "";
@@ -60,8 +61,16 @@ const createDefaults: StudentValues = {
   },
   guardians: {
     father_name: "",
+    father_phone: "",
+    father_email: "",
+
     mother_name: "",
+    mother_phone: "",
+    mother_email: "",
+
     guardian_name: "",
+    guardian_phone: "",
+    guardian_email: "",
   },
   addresses: [
     {
@@ -151,6 +160,7 @@ function toDefaults(entity: StudentEntity): StudentValues {
     (dobAd ? convertAdToBs(dobAd) ?? "" : "");
 
   const gs = ((entity.profile as any)?.guardians ?? []) as any[];
+
   const father = gs.find((x) => x.relation === "father");
   const mother = gs.find((x) => x.relation === "mother");
   const guardian = gs.find((x) => x.relation === "guardian");
@@ -175,13 +185,18 @@ function toDefaults(entity: StudentEntity): StudentValues {
     },
     guardians: {
       father_name: father?.full_name ?? "",
+      father_phone: normalizePhoneForForm(father?.phone ?? ""),
+      father_email: father?.email ?? "",
+
       mother_name: mother?.full_name ?? "",
+      mother_phone: normalizePhoneForForm(mother?.phone ?? ""),
+      mother_email: mother?.email ?? "",
+
       guardian_name: guardian?.full_name ?? "",
+      guardian_phone: normalizePhoneForForm(guardian?.phone ?? ""),
+      guardian_email: guardian?.email ?? "",
     },
-    addresses: [
-      pickAddress(entity, "permanent"),
-      pickAddress(entity, "temporary"),
-    ],
+    addresses: [pickAddress(entity, "permanent"), pickAddress(entity, "temporary")],
     documents: {
       photo_id: docs?.photo?.id ?? "",
       photo_file: docs?.photo?.file?.id ?? "",
@@ -234,13 +249,48 @@ function docObj(fileId: string, issuedDate?: string, id?: string) {
 
 function buildGuardians(values: StudentValues) {
   const out: any[] = [];
-  const f = (values.guardians?.father_name || "").trim();
-  const m = (values.guardians?.mother_name || "").trim();
-  const g = (values.guardians?.guardian_name || "").trim();
 
-  if (f) out.push({ relation: "father", full_name: f, phone: "", email: "", occupation: "", is_primary: true });
-  if (m) out.push({ relation: "mother", full_name: m, phone: "", email: "", occupation: "", is_primary: out.length === 0 });
-  if (g) out.push({ relation: "guardian", full_name: g, phone: "", email: "", occupation: "", is_primary: out.length === 0 });
+  const fName = (values.guardians?.father_name || "").trim();
+  const mName = (values.guardians?.mother_name || "").trim();
+  const gName = (values.guardians?.guardian_name || "").trim();
+
+  const fPhone = formatPhoneForApi(values.guardians?.father_phone || "");
+  const mPhone = formatPhoneForApi(values.guardians?.mother_phone || "");
+  const gPhone = formatPhoneForApi(values.guardians?.guardian_phone || "");
+
+  const fEmail = (values.guardians?.father_email || "").trim();
+  const mEmail = (values.guardians?.mother_email || "").trim();
+  const gEmail = (values.guardians?.guardian_email || "").trim();
+
+  if (fName)
+    out.push({
+      relation: "father",
+      full_name: fName,
+      phone: fPhone || "",
+      email: fEmail || "",
+      occupation: "",
+      is_primary: true,
+    });
+
+  if (mName)
+    out.push({
+      relation: "mother",
+      full_name: mName,
+      phone: mPhone || "",
+      email: mEmail || "",
+      occupation: "",
+      is_primary: out.length === 0,
+    });
+
+  if (gName)
+    out.push({
+      relation: "guardian",
+      full_name: gName,
+      phone: gPhone || "",
+      email: gEmail || "",
+      occupation: "",
+      is_primary: out.length === 0,
+    });
 
   return out;
 }
@@ -267,13 +317,25 @@ function toPayload(values: StudentValues) {
 
   const docs: any = {
     photo: docObj(values.documents.photo_file, dobAd, values.documents.photo_id || undefined),
-    birth_certificate: docObj(values.documents.birth_certificate_file, dobAd, values.documents.birth_certificate_id || undefined),
+    birth_certificate: docObj(
+      values.documents.birth_certificate_file,
+      dobAd,
+      values.documents.birth_certificate_id || undefined
+    ),
   };
 
-  const tc = docObj(values.documents.transfer_certificate_file || "", dobAd, values.documents.transfer_certificate_id || undefined);
+  const tc = docObj(
+    values.documents.transfer_certificate_file || "",
+    dobAd,
+    values.documents.transfer_certificate_id || undefined
+  );
   if (tc) docs.transfer_certificate = tc;
 
-  const ms = docObj(values.documents.marksheet_file || "", dobAd, values.documents.marksheet_id || undefined);
+  const ms = docObj(
+    values.documents.marksheet_file || "",
+    dobAd,
+    values.documents.marksheet_id || undefined
+  );
   if (ms) docs.marksheet = ms;
 
   return {
@@ -305,7 +367,7 @@ function toPayload(values: StudentValues) {
 export function StudentsFormPage(props: { mode: "create" | "edit" }) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const id = props.mode === "edit" ? (searchParams.get("user_id") || "") : "";
+  const id = props.mode === "edit" ? searchParams.get("user_id") || "" : "";
 
   const qc = useQueryClient();
 
@@ -352,8 +414,7 @@ export function StudentsFormPage(props: { mode: "create" | "edit" }) {
     },
   });
 
-  const blocked =
-    detailQuery.isFetching || createMutation.isPending || updateMutation.isPending;
+  const blocked = detailQuery.isFetching || createMutation.isPending || updateMutation.isPending;
 
   const entity = detailQuery.data ?? null;
 
@@ -383,9 +444,7 @@ export function StudentsFormPage(props: { mode: "create" | "edit" }) {
   return (
     <PageShell
       title={title}
-      description={
-        props.mode === "create" ? "Create a new student." : "Update student."
-      }
+      description={props.mode === "create" ? "Create a new student." : "Update student."}
       actions={
         <Button variant="outline" asChild>
           <Link href="/students">Back</Link>
@@ -426,18 +485,21 @@ export function StudentsFormPage(props: { mode: "create" | "edit" }) {
                     label="First name"
                     required
                     disabled={blocked}
+                    placeholder="First name"
                     {...methods.register("user.first_name")}
                     error={methods.formState.errors.user?.first_name as any}
                   />
                   <InputField
                     label="Middle name"
                     disabled={blocked}
+                    placeholder="Middle name"
                     {...methods.register("user.middle_name")}
                     error={methods.formState.errors.user?.middle_name as any}
                   />
                   <InputField
                     label="Last name"
                     required
+                    placeholder="Last name"
                     disabled={blocked}
                     {...methods.register("user.last_name")}
                     error={methods.formState.errors.user?.last_name as any}
@@ -449,7 +511,6 @@ export function StudentsFormPage(props: { mode: "create" | "edit" }) {
                     placeholder="98XXXXXXXX"
                     {...methods.register("user.phone")}
                     error={methods.formState.errors.user?.phone as any}
-                    hint="We’ll automatically add +977 when saving."
                   />
                   <InputField
                     label="Email (optional)"
@@ -533,6 +594,21 @@ export function StudentsFormPage(props: { mode: "create" | "edit" }) {
                     error={methods.formState.errors.guardians?.father_name as any}
                   />
                   <InputField
+                    label="Father Phone (optional)"
+                    placeholder="98XXXXXXXX"
+                    disabled={blocked}
+                    {...methods.register("guardians.father_phone")}
+                    error={methods.formState.errors.guardians?.father_phone as any}
+                  />
+                  <InputField
+                    label="Father Email (optional)"
+                    placeholder="name@domain.com"
+                    disabled={blocked}
+                    {...methods.register("guardians.father_email")}
+                    error={methods.formState.errors.guardians?.father_email as any}
+                  />
+
+                  <InputField
                     label="Mother Name"
                     placeholder="Mother full name"
                     disabled={blocked}
@@ -540,11 +616,40 @@ export function StudentsFormPage(props: { mode: "create" | "edit" }) {
                     error={methods.formState.errors.guardians?.mother_name as any}
                   />
                   <InputField
+                    label="Mother Phone (optional)"
+                    placeholder="98XXXXXXXX"
+                    disabled={blocked}
+                    {...methods.register("guardians.mother_phone")}
+                    error={methods.formState.errors.guardians?.mother_phone as any}
+                  />
+                  <InputField
+                    label="Mother Email (optional)"
+                    placeholder="name@domain.com"
+                    disabled={blocked}
+                    {...methods.register("guardians.mother_email")}
+                    error={methods.formState.errors.guardians?.mother_email as any}
+                  />
+
+                  <InputField
                     label="Guardian Name"
                     placeholder="Guardian full name"
                     disabled={blocked}
                     {...methods.register("guardians.guardian_name")}
                     error={methods.formState.errors.guardians?.guardian_name as any}
+                  />
+                  <InputField
+                    label="Guardian Phone (optional)"
+                    placeholder="98XXXXXXXX"
+                    disabled={blocked}
+                    {...methods.register("guardians.guardian_phone")}
+                    error={methods.formState.errors.guardians?.guardian_phone as any}
+                  />
+                  <InputField
+                    label="Guardian Email (optional)"
+                    placeholder="name@domain.com"
+                    disabled={blocked}
+                    {...methods.register("guardians.guardian_email")}
+                    error={methods.formState.errors.guardians?.guardian_email as any}
                   />
                 </div>
 
@@ -651,7 +756,7 @@ export function StudentsFormPage(props: { mode: "create" | "edit" }) {
               <div className="rounded-lg border p-4 space-y-4">
                 <div className="font-medium">Health / Other Information</div>
 
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                   <SwitchField
                     label="Is Disabled"
                     checked={methods.watch("other_info.is_disabled")}
