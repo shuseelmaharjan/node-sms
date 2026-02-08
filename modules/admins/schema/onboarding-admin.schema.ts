@@ -1,3 +1,4 @@
+// modules/admins/schema/onboarding-admin.schema.ts
 import { z } from "zod";
 
 const phoneRegex = /^[0-9+]{7,20}$/;

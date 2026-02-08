@@ -101,6 +101,15 @@ export const navconfig: NavItem[] = [
     roles: ["admin", "principal"],
     exactMatch: true,
   },
+  {
+    label: "Enrollments",
+    icon: Users,
+    roles: ["admin", "principal"],
+    children: [
+      { label: "Student", href: "/student-enrollment" },
+      { label: "Teachers", href: "/teacher-enrollment" },
+    ],
+  },
 
   // Roles & Permissions: superadmin only
   // {
