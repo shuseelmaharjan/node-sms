@@ -411,27 +411,6 @@ export function StaffFormPage(props: { mode: "create" | "edit" }) {
 
           return (
             <div className="space-y-6">
-              {/* ROLE */}
-              <div className="rounded-lg border p-4 space-y-4">
-                <div className="font-medium">Role</div>
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                  <Controller
-                    control={methods.control}
-                    name={"role" as any}
-                    render={({ field, fieldState }) => (
-                      <SelectField
-                        control={methods.control}
-                        name={"role" as any}
-                        label="Staff Role"
-                        required
-                        disabled={blocked}
-                        options={roleOptions}
-                      />
-                    )}
-                  />
-                </div>
-              </div>
-
               {/* USER */}
               <div className="rounded-lg border p-4 space-y-4">
                 <div className="font-medium">User Information</div>
@@ -458,6 +437,20 @@ export function StaffFormPage(props: { mode: "create" | "edit" }) {
                     disabled={blocked}
                     {...methods.register("user.last_name")}
                     error={methods.formState.errors.user?.last_name as any}
+                  />
+                   <Controller
+                    control={methods.control}
+                    name={"role" as any}
+                    render={({ field, fieldState }) => (
+                      <SelectField
+                        control={methods.control}
+                        name={"role" as any}
+                        label="Staff Role"
+                        required
+                        disabled={blocked}
+                        options={roleOptions}
+                      />
+                    )}
                   />
                   <InputField
                     label="Phone"

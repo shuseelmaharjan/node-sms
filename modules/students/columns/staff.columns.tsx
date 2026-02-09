@@ -55,6 +55,7 @@ export type StaffEntity = {
 export function staffColumns(args: {
   onEdit: (row: StaffEntity) => void;
   onDelete: (row: StaffEntity) => void;
+  onActivate: (row: StaffEntity) => void;   // 👈 NEW
 }): ColumnDef<StaffEntity>[] {
   return [
     {
@@ -118,16 +119,29 @@ export function staffColumns(args: {
       id: "actions",
       header: "Actions",
       enableSorting: false,
-      cell: ({ row }) => (
-        <div className="flex gap-2">
-          <Button type="button" size="sm" variant="outline" onClick={() => args.onEdit(row.original)}>
-            Edit
-          </Button>
-          <Button type="button" size="sm" variant="destructive" onClick={() => args.onDelete(row.original)}>
-            Delete
-          </Button>
-        </div>
-      ),
+      cell: ({ row }) => {
+        const staff = row.original;
+        const isDraft = (staff.status ?? "").toLowerCase() === "draft";
+
+        return (
+          <div className="flex gap-2">
+            <Button type="button" size="sm" variant="outline" onClick={() => args.onEdit(staff)}>
+              Edit
+            </Button>
+
+            {/* 👇 Activate button only if DRAFT */}
+            {isDraft && (
+              <Button type="button" size="sm" variant="default" onClick={() => args.onActivate(staff)}>
+                Activate
+              </Button>
+            )}
+
+            <Button type="button" size="sm" variant="destructive" onClick={() => args.onDelete(staff)}>
+              Delete
+            </Button>
+          </div>
+        );
+      },
     },
   ];
 }

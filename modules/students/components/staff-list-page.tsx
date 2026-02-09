@@ -16,7 +16,7 @@ import { AddActionButton, type AddAction } from "@/components/data-table/AddActi
 
 import { staffColumns, type StaffEntity } from "../columns/staff.columns";
 
-const LIST_URL = "/api/onboarding/staff-users/";
+const LIST_URL = "/api/onboarding/staff-users/?status=draft";
 const DETAIL_URL = (id: string) => `/api/onboarding/staff-users/${id}/`;
 
 function toOrdering(s: SortingState) {
@@ -90,10 +90,12 @@ export function StaffListPage() {
     () =>
       staffColumns({
         onEdit: (row) => router.push(`/staff-enrollment/update-record?user_id=${row.id}`),
+        onActivate: (row) => router.push(`/staff-enrollment/activation?user=${row.id}`), 
         onDelete: (row) => setDeleteTarget(row),
       }),
     [router]
   );
+
 
   const searchable = pageData?.meta?.searchable ?? [];
   const searchEnabled = searchable.length > 0;
