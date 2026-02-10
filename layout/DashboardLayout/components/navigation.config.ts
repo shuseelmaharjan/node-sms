@@ -91,6 +91,7 @@ export const navconfig: NavItem[] = [
     children: [
       { label: "Academic Year", href: "/academic-year", roles: ["admin", "principal"] },
       { label: "Manage Classrooms", href: "/manage-classroom", roles: ["admin", "principal"] },
+      { label: "Class Schedules", href: "/schedules", roles: ["admin", "principal"] },
     ],
   },
   // Fee Head : Permission superadmin only
