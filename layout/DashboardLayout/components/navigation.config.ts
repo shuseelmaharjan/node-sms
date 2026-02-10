@@ -65,6 +65,14 @@ export const navconfig: NavItem[] = [
     roles: ["superadmin"],
   },
 
+  {
+    label: "Users",
+    icon: Users,
+    children: [
+      { label: "Teachers", href: "/teachers", roles: ["principal", "admin"] },
+      { label: "Employees", href: "/employee", roles: ["principal", "admin"] },
+    ],
+  },
   // Organizations: superadmin/admin
   // {
   //   label: "Organizations",
