@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { RefreshCcw } from "lucide-react";
+import { FileText, RefreshCcw } from "lucide-react";
 import { toast } from "sonner";
 
 import { api } from "@/api";
@@ -16,6 +16,8 @@ import { scheduleColumns } from "../columns/schedule.columns";
 import { ScheduleFormModal } from "../components/schedule-form-modal";
 
 import { useBatches, useClasses, useSections } from "../hooks/schedule.hooks";
+import { Button } from "@/components/ui/button";
+import { SchedulePdfSheet } from "../components/schedule-pdf-sheet";
 
 const LIST_URL = "/api/v1/academics/schedules/";
 const DETAIL_URL = (id: string) => `/api/v1/academics/schedules/${id}/`;
@@ -42,6 +44,8 @@ export function ScheduleListPage() {
   const [open, setOpen] = React.useState(false);
   const [editId, setEditId] = React.useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = React.useState<Schedule | null>(null);
+  const [pdfOpen, setPdfOpen] = React.useState(false);
+
 
   const batchesQ = useBatches();
   const classesQ = useClasses(batch);
@@ -128,7 +132,18 @@ export function ScheduleListPage() {
 
   return (
     <>
-      <PageShell title="Schedules" description="Create, edit and manage class schedules.">
+      <PageShell
+        title="Schedules"
+        description="Create, edit and manage class schedules."
+        actions={
+          <div className="flex gap-2">
+            <Button variant="default" onClick={() => setPdfOpen(true)}>
+              <FileText className="mr-2 h-4 w-4" />
+              Generate
+            </Button>
+          </div>
+        }
+      >
         <DataTable<Schedule>
           data={rows}
           columns={columns}
@@ -232,7 +247,7 @@ export function ScheduleListPage() {
             },
           }}
           sorting={[]}
-          onSortingChange={() => {}}
+          onSortingChange={() => { }}
         />
       </PageShell>
 
@@ -256,6 +271,14 @@ export function ScheduleListPage() {
         onConfirm={async () => {
           if (!deleteTarget) return;
           await deleteMutation.mutateAsync(deleteTarget.id);
+        }}
+      />
+
+      {/* PDF Generator Sheet */}
+      <SchedulePdfSheet
+        open={pdfOpen}
+        onOpenChange={(v) => {
+          setPdfOpen(v);
         }}
       />
     </>

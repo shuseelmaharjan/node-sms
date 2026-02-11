@@ -1,6 +1,6 @@
 import { api } from "@/api";
 import type { PaginatedResponse } from "@/types/api";
-import type { BatchEntity, ClassroomEntity, SectionEntity } from "../types/classroom.types";
+import type { BatchEntity, ClassroomEntity, SectionEntity } from "../@types/classroom.types";
 
 const BATCHES_URL = "/api/v1/batches/";
 const CLASSROOMS_URL = "/api/v1/academics/classrooms/";

@@ -31,7 +31,7 @@ import { ConfirmDeleteDialog } from "@/components/crud/ConfirmDeleteDialog";
 import { FormWizard } from "@/components/form/FormWizard";
 import { InputField } from "@/components/fields/InputField";
 
-import type { ClassroomEntity, SectionEntity } from "../types/classroom.types";
+import type { ClassroomEntity, SectionEntity } from "../@types/classroom.types";
 import {
     fetchBatches,
     fetchClassrooms,

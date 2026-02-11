@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import { api } from "@/api"; // ✅ uses your axios instance (auth headers included)
+import { api } from "@/api"; 
 
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -239,7 +239,7 @@ export function ImageViewer({
         )}
       </DialogTrigger>
 
-      <DialogContent className="max-w-5xl p-0 overflow-hidden">
+      <DialogContent className="sm:max-w-[720px] p-0 overflow-hidden">
         <DialogHeader className="px-4 pt-4">
           <div className="flex items-start justify-between gap-3">
             <DialogTitle className="truncate pr-2">{dialogTitle}</DialogTitle>

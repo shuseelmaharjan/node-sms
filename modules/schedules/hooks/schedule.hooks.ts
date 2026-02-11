@@ -10,6 +10,7 @@ import {
   listSections,
   listSubjects,
   listTeachers,
+  downloadSchedulePdf,
   type ScheduleListParams,
 } from "../api/schedule.api";
 
@@ -80,5 +81,11 @@ export function useTeachers(subjectId?: string, search?: string) {
     queryKey: ["teachers", "list", { subject_id: subjectId ?? "", search: search ?? "" }],
     queryFn: () => listTeachers({ page: 1, page_size: 200, subject_id: subjectId, search }),
     enabled: Boolean(subjectId),
+  });
+}
+
+export function useDownloadSchedulePdf() {
+  return useMutation({
+    mutationFn: downloadSchedulePdf,
   });
 }

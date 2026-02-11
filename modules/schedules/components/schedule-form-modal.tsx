@@ -473,7 +473,7 @@ export function ScheduleFormModal(props: {
                                                     <SelectItem value="__none__">Select teacher</SelectItem>
                                                     {(teachersQ.data?.results ?? []).map((t) => (
                                                         <SelectItem key={t.id} value={t.id}>
-                                                            {t.full_name}{t.phone ? ` • ${t.phone}` : ""}
+                                                            {t.full_name}{t.specialization?.teacher_level ? ` • ${t.specialization.teacher_level}` : ""}
                                                         </SelectItem>
                                                     ))}
                                                 </SelectContent>

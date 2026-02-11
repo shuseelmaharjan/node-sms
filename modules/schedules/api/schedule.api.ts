@@ -85,3 +85,20 @@ export async function listTeachers(params?: {
   const res = await api.get<Paginated<TeacherListRow>>(TEACHERS, { params });
   return res.data;
 }
+
+const SCHEDULE_PDF = "/api/v1/academics/schedules/pdf/";
+
+export async function downloadSchedulePdf(params: { batch: string | number; academic_class: string | "all" }) {
+  const res = await api.get(SCHEDULE_PDF, {
+    params,
+    responseType: "blob", 
+  });
+
+  // Try to use filename from header if present
+  const cd = res.headers?.["content-disposition"] as string | undefined;
+  const filename =
+    cd?.match(/filename="?([^"]+)"?/i)?.[1] ??
+    `routine_${params.batch}_${params.academic_class}.pdf`;
+
+  return { blob: res.data as Blob, filename };
+}
