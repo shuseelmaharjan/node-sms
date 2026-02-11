@@ -1,3 +1,5 @@
+// modules/schedules/types/schedule.types.ts
+
 export type Paginated<T> = {
   count: number;
   next: string | null;
@@ -61,23 +63,28 @@ export type TeacherListRow = {
   } | null;
 };
 
+export type ScheduleKind = "class" | "break" | "holiday";
+
 export type Schedule = {
   id: string;
 
   batch_id: number;
 
-  academic_class_id: string;
-  academic_class_name: string;
+  kind: ScheduleKind;
+  title?: string | null;
+
+  academic_class_id: string | null;
+  academic_class_name: string | null;
 
   section_id: string | null;
   section_name: string | null;
 
-  subject_id: string;
-  subject_name: string;
-  subject_code: string;
+  subject_id: string | null;
+  subject_name: string | null;
+  subject_code: string | null;
 
-  teacher_id: string;
-  teacher_name: string;
+  teacher_id: string | null;
+  teacher_name: string | null;
 
   day_of_week: number; // 0..6
   start_time: string;  // "HH:MM:SS" or "HH:MM"
@@ -86,10 +93,17 @@ export type Schedule = {
 
 export type ScheduleCreatePayload = {
   batch_id: number;
-  academic_class_id: string;
+
+  kind: ScheduleKind;
+  title?: string | null;
+
+  academic_class_id?: string | null;
   section_id?: string | null;
-  subject_id: string;
-  teacher_id: string;
+
+  // only for class
+  subject_id?: string | null;
+  teacher_id?: string | null;
+
   day_of_week: number;
   start_time: string; // "HH:MM"
   end_time: string;   // "HH:MM"

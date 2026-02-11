@@ -1,3 +1,4 @@
+// modules/schedules/api/schedule.api.ts
 import { api } from "@/api";
 import type {
   Paginated,
@@ -12,14 +13,14 @@ import type {
 } from "../types/schedule.types";
 
 const SCHEDULES = "/api/v1/academics/schedules/";
-const BATCHES = "/api/v1/batches/";
+const BATCHES = "/api/v1/batches/?status=active";
 const CLASSES = "/api/v1/academics/classrooms/";
 const SECTIONS = "/api/v1/academics/sections/";
 const SUBJECTS = "/api/v1/subjects/";
 const TEACHERS = "/api/v1/teachers/";
 
 export type ScheduleListParams = {
-  page?: number;        // DRF pagination is usually 1-based
+  page?: number;
   page_size?: number;
   search?: string;
   ordering?: string;
@@ -29,6 +30,7 @@ export type ScheduleListParams = {
   section?: string;
   teacher?: string;
   day_of_week?: string | number;
+  kind?: string; // ✅ NEW
 };
 
 export async function listSchedules(params: ScheduleListParams) {
@@ -51,8 +53,10 @@ export async function deleteSchedule(id: string) {
 }
 
 /* Lookups */
-export async function listBatches(params?: { page?: number; page_size?: number }) {
-  const res = await api.get<Paginated<Batch>>(BATCHES, { params });
+export async function listBatches(params?: { page?: number; page_size?: number; status?: string }) {
+  const res = await api.get<Paginated<Batch>>(BATCHES, {
+    params: { status: "active", page: 1, page_size: 10, ...params },
+  });
   return res.data;
 }
 
@@ -61,7 +65,7 @@ export async function listClasses(params?: { page?: number; page_size?: number; 
   return res.data;
 }
 
-export async function listSections(params?: { page?: number; page_size?: number; academic_class?: string; batch?: number | string }) {
+export async function listSections(params?: { page?: number; page_size?: number; academic_class_id?: string }) {
   const res = await api.get<Paginated<Section>>(SECTIONS, { params });
   return res.data;
 }
@@ -71,7 +75,13 @@ export async function listSubjects(params?: { page?: number; page_size?: number;
   return res.data;
 }
 
-export async function listTeachers(params?: { page?: number; page_size?: number; search?: string; ordering?: string }) {
+export async function listTeachers(params?: {
+  page?: number;
+  page_size?: number;
+  subject_id?: string;
+  search?: string;
+  ordering?: string;
+}) {
   const res = await api.get<Paginated<TeacherListRow>>(TEACHERS, { params });
   return res.data;
 }

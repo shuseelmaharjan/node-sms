@@ -1,19 +1,26 @@
 "use client";
 
 import type { ColumnDef } from "@tanstack/react-table";
-import { RowActionsDropdown } from "@/components/data-table/RowActionsDropdown";
+import { Button } from "@/components/ui/button";
 import type { Schedule } from "../types/schedule.types";
-import { ScheduleUpsertDialog } from "../components/ScheduleUpsertDialog";
-import { ScheduleDeleteDialog } from "../components/ScheduleDeleteDialog";
 
-const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
-function hhmm(v?: string) {
+function hhmm(v?: string | null) {
   if (!v) return "-";
   return v.slice(0, 5);
 }
 
-export function scheduleColumns(): ColumnDef<Schedule>[] {
+function kindLabel(kind: Schedule["kind"]) {
+  if (kind === "class") return "Class";
+  if (kind === "break") return "Break";
+  return "Holiday";
+}
+
+export function scheduleColumns(args: {
+  onEdit: (row: Schedule) => void;
+  onDelete: (row: Schedule) => void;
+}): ColumnDef<Schedule>[] {
   return [
     {
       accessorKey: "day_of_week",
@@ -32,12 +39,24 @@ export function scheduleColumns(): ColumnDef<Schedule>[] {
       ),
     },
     {
+      accessorKey: "kind",
+      header: "Type",
+      enableSorting: true,
+      cell: ({ row }) => kindLabel(row.original.kind),
+    },
+    {
+      accessorKey: "title",
+      header: "Title",
+      enableSorting: false,
+      cell: ({ row }) => row.original.title ?? "-",
+    },
+    {
       accessorKey: "academic_class_name",
       header: "Class",
       enableSorting: true,
       cell: ({ row }) => (
         <div className="flex flex-col">
-          <span className="font-medium">{row.original.academic_class_name}</span>
+          <span className="font-medium">{row.original.academic_class_name ?? "-"}</span>
           <span className="text-xs text-muted-foreground">
             {row.original.section_name ? `Section: ${row.original.section_name}` : "No section"}
           </span>
@@ -49,18 +68,19 @@ export function scheduleColumns(): ColumnDef<Schedule>[] {
       header: "Subject",
       enableSorting: true,
       cell: ({ row }) => (
-        <div className="flex flex-col">
-          <span className="font-medium">
-            {row.original.subject_name} <span className="text-xs text-muted-foreground">({row.original.subject_code})</span>
-          </span>
-        </div>
+        <span className="font-medium">
+          {row.original.subject_name ?? "-"}
+          {row.original.subject_code ? (
+            <span className="text-xs text-muted-foreground"> ({row.original.subject_code})</span>
+          ) : null}
+        </span>
       ),
     },
     {
       accessorKey: "teacher_name",
       header: "Teacher",
       enableSorting: true,
-      cell: ({ row }) => <span className="font-medium">{row.original.teacher_name}</span>,
+      cell: ({ row }) => <span className="font-medium">{row.original.teacher_name ?? "-"}</span>,
     },
     {
       id: "actions",
@@ -69,48 +89,16 @@ export function scheduleColumns(): ColumnDef<Schedule>[] {
       cell: ({ row }) => {
         const sched = row.original;
         return (
-          <RowActionsDropdown<Schedule>
-            row={sched}
-            items={[
-              {
-                key: "edit",
-                label: "Edit",
-                onSelect: () => {},
-              },
-              {
-                key: "delete",
-                label: "Delete",
-                variant: "destructive",
-                onSelect: () => {},
-                separatorBefore: true,
-              },
-            ]}
-          />
+          <div className="flex gap-2 justify-end">
+            <Button size="sm" variant="outline" onClick={() => args.onEdit(sched)}>
+              Edit
+            </Button>
+            <Button size="sm" variant="destructive" onClick={() => args.onDelete(sched)}>
+              Delete
+            </Button>
+          </div>
         );
       },
     },
   ];
-}
-
-/**
- * If you want the dropdown items to actually open dialogs,
- * easiest approach: render buttons directly instead of RowActionsDropdown.
- *
- * OR keep dropdown but route state via a small local state controller.
- * Below is the simple + clean version (recommended):
- */
-
-export function ScheduleRowActionsInline({ schedule }: { schedule: Schedule }) {
-  return (
-    <div className="flex items-center justify-end gap-2">
-      <ScheduleUpsertDialog
-        initial={schedule}
-        trigger={<button className="text-sm text-primary underline">Edit</button>}
-      />
-      <ScheduleDeleteDialog
-        id={schedule.id}
-        label={<button className="text-sm text-destructive underline">Delete</button>}
-      />
-    </div>
-  );
 }
