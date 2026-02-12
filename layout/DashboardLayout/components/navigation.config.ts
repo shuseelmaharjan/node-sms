@@ -12,6 +12,7 @@ import {
   Building,
   UserCheck2,
   HandCoins,
+  BriefcaseBusiness,
 } from "lucide-react";
 
 import type { UserRole } from "@/router/routes";
@@ -102,6 +103,7 @@ export const navconfig: NavItem[] = [
     roles: ["superadmin"],
     exactMatch: true,
   },
+  
   // Fee Management : Permission admin and principal
   {
     label: "Fee Management",
@@ -109,6 +111,13 @@ export const navconfig: NavItem[] = [
     href: "/fee-management",
     roles: ["admin", "principal"],
     exactMatch: true,
+  },
+  {
+    label: "Operations",
+    icon: BriefcaseBusiness,
+    roles: ["admin", "principal"],
+    exactMatch: true,
+    href: "/operations",
   },
   {
     label: "Enrollments",
