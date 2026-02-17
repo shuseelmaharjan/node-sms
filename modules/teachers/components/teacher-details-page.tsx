@@ -1,3 +1,4 @@
+//modules/teachers/components/teacher-details-page.tsx
 "use client";
 
 import * as React from "react";

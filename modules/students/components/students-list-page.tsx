@@ -16,7 +16,7 @@ import { PageShell } from "@/components/layout/PageShell";
 import { AddActionButton, type AddAction } from "@/components/data-table/AddActionButton";
 
 import { studentColumns, type StudentEntity } from "../columns/student.columns";
-const LIST_URL = "/api/onboarding/students/";
+const LIST_URL = "/api/onboarding/students/?status=draft";
 const DETAIL_URL = (id: string) => `/api/onboarding/students/${id}/`;
 
 function toOrdering(s: SortingState) {
@@ -93,6 +93,7 @@ export function StudentsListPage() {
       studentColumns({
         onEdit: (row) => router.push(`/student-enrollment/update-record?user_id=${row.id}`),
         onDelete: (row) => setDeleteTarget(row),
+        onView: (row) => router.push(`/student-enrollment/confirm-enrollment?user_id=${row.id}`),
       }),
     [router]
   );

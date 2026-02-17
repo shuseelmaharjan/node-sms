@@ -1,3 +1,4 @@
+// modules/teachers/types/teacher.types.ts
 export type UploadedFile = {
   id: string;
   file_url: string | null;

@@ -1,3 +1,4 @@
+// teachers/[id]/page.tsx
 import { TeacherDetailsPage } from "@/modules/teachers/components/teacher-details-page";
 
 export default function TeacherDetailsRoutePage({

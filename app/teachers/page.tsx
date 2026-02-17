@@ -1,3 +1,4 @@
+// teachers/page.tsx
 import { TeachersPage } from "@/modules/teachers/components/teachers-page";
 
 export default function TeachersIndexPage() {

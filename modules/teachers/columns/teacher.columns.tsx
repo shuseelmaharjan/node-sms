@@ -1,3 +1,4 @@
+// modules/teachers/columns/teacher.columns.tsx
 "use client";
 
 import * as React from "react";

@@ -62,6 +62,7 @@ export type StudentEntity = {
 export function studentColumns(args: {
   onEdit: (row: StudentEntity) => void;
   onDelete: (row: StudentEntity) => void;
+  onView: (row: StudentEntity) => void;
 }): ColumnDef<StudentEntity>[] {
   return [
     {
@@ -133,6 +134,9 @@ export function studentColumns(args: {
       enableSorting: false,
       cell: ({ row }) => (
         <div className="flex gap-2">
+          <Button type="button" size="sm" variant="default" onClick={() => args.onView(row.original)}>
+            Confirm
+          </Button>
           <Button type="button" size="sm" variant="outline" onClick={() => args.onEdit(row.original)}>
             Edit
           </Button>

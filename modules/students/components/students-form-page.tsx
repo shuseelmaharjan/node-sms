@@ -394,9 +394,16 @@ export function StudentsFormPage(props: { mode: "create" | "edit" }) {
       const res = await api.post(LIST_URL, toPayload(values));
       return res.data as any;
     },
-    onSuccess: async () => {
+    onSuccess: async (payload) => {
       await qc.invalidateQueries({ queryKey: ["students", "list"] });
-      router.push("/student-enrollment");
+      const userId = payload?.data?.id ?? payload?.id;
+      if (userId) {
+        router.push(
+          `/student-enrollment/confirm-enrollment?user_id=${encodeURIComponent(userId)}`
+        );
+      } else {
+        router.push("/student-enrollment");
+      }
       router.refresh();
     },
   });
