@@ -100,8 +100,8 @@ export function Student360DetailsPage({ id }: { id: string }) {
 
   return (
     <PageShell
-      title="Student 360°"
-      description="Profile + Academics + Finance dashboard."
+      title="Student Dashboard"
+      description="Profile, Academics, and Finance overview."
       actions={
         <div className="flex items-center gap-2">
           <Button variant="outline" onClick={() => router.back()}>
