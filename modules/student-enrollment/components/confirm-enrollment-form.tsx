@@ -1,3 +1,4 @@
+// confirm-enrollment-form.tsx
 "use client";
 
 import * as React from "react";
@@ -9,7 +10,10 @@ import { FormWizard } from "@/components/form/FormWizard";
 import { SelectField } from "@/components/fields/SelectField";
 import { InputField } from "@/components/fields/InputField";
 
-import { confirmEnrollmentSchema, type ConfirmEnrollmentValues } from "../schema/confirm-enrollment.schema";
+import {
+  confirmEnrollmentSchema,
+  type ConfirmEnrollmentValues,
+} from "../schema/confirm-enrollment.schema";
 import type {
   ApplicableFeeResponse,
   ApplicableFeeStructure,
@@ -19,12 +23,7 @@ import type {
   SectionRow,
 } from "../types/confirm-enrollment.types";
 import { formatDateShort } from "@/utils/text-utils";
-import {
-  FeeItemsList,
-  safeMoney,
-  toNum,
-  multiplierForPeriod,
-} from "./fee-items-list";
+import { FeeItemsList, safeMoney, toNum, multiplierForPeriod } from "./fee-items-list";
 
 /* endpoints */
 const BATCHES_URL = `/api/v1/batches/`;
@@ -33,6 +32,21 @@ const SECTIONS_URL = `/api/v1/academics/sections/`;
 const APPLICABLE_FEES_URL = (batchId: string, classId: string) =>
   `/api/v1/fees/fee-structures/applicable/?batch_id=${batchId}&class_id=${classId}/`;
 const SUBMIT_URL = `/api/v1/academics/student-enrollments/enroll-and-setup-fees/`;
+
+/* ✅ NEW: tax math helper (same rule used everywhere) */
+function splitTax(lineAmount: number, taxIncluded: boolean, taxRate: number) {
+  if (taxRate <= 0) return { net: lineAmount, tax: 0, payable: lineAmount };
+
+  if (taxIncluded) {
+    const net = lineAmount / (1 + taxRate);
+    const tax = lineAmount - net;
+    return { net, tax, payable: lineAmount };
+  }
+
+  const net = lineAmount;
+  const tax = net * taxRate;
+  return { net, tax, payable: net + tax };
+}
 
 /* money input helpers */
 function sanitizeMoneyInput(raw: string) {
@@ -52,7 +66,11 @@ function MoneyField(props: {
   methods: any;
   onUserChange?: () => void;
 }) {
-  const { register, setValue, formState: { errors } } = props.methods;
+  const {
+    register,
+    setValue,
+    formState: { errors },
+  } = props.methods;
 
   return (
     <InputField
@@ -68,7 +86,11 @@ function MoneyField(props: {
         setValue(props.name, cleaned, { shouldDirty: true, shouldValidate: true });
       }}
       onBlur={(e) => {
-        if ((props.name === "discounted_amount" || props.name === "scholarship_amount") && !e.target.value.trim()) {
+        if (
+          (props.name === "discounted_amount" ||
+            props.name === "scholarship_amount") &&
+          !e.target.value.trim()
+        ) {
           setValue(props.name, "0.00", { shouldDirty: true, shouldValidate: true });
         }
       }}
@@ -207,7 +229,9 @@ export function ConfirmEnrollmentForm(props: {
           const discount = toNum(watch("discounted_amount"));
           const scholarship = toNum(watch("scholarship_amount"));
 
-          const lastChanged = React.useRef<"payable" | "discount" | "scholarship" | "fees" | null>(null);
+          const lastChanged = React.useRef<
+            "payable" | "discount" | "scholarship" | "fees" | null
+          >(null);
 
           React.useEffect(() => {
             setBatchId(wBatch || "");
@@ -225,7 +249,11 @@ export function ConfirmEnrollmentForm(props: {
             // eslint-disable-next-line react-hooks/exhaustive-deps
           }, [wClass]);
 
-          // GROSS (net) sum
+          /**
+           * ✅ IMPORTANT FIX:
+           * gross should represent TOTAL PAYABLE (what the student pays),
+           * not net.
+           */
           const gross = React.useMemo(() => {
             if (!feeRows.length || !selectedFees.length) return 0;
 
@@ -237,11 +265,10 @@ export function ConfirmEnrollmentForm(props: {
               const mult = multiplierForPeriod(f.period, currentBatchEndAd);
               const lineAmount = amt * mult;
 
-              // tax included => net = gross/(1+taxRate)
               const taxIncluded = (f as any).tax_included ?? false;
-              const netAmount = taxIncluded && taxRate > 0 ? lineAmount / (1 + taxRate) : lineAmount;
+              const { payable } = splitTax(lineAmount, taxIncluded, taxRate);
 
-              sum += netAmount;
+              sum += payable;
             }
 
             return Math.max(0, sum);
@@ -253,7 +280,10 @@ export function ConfirmEnrollmentForm(props: {
             lastChanged.current = "fees";
             setValue("discounted_amount", "0.00", { shouldDirty: false, shouldValidate: true });
             setValue("scholarship_amount", "0.00", { shouldDirty: false, shouldValidate: true });
-            setValue("total_payable_amount", safeMoney(gross), { shouldDirty: false, shouldValidate: true });
+            setValue("total_payable_amount", safeMoney(gross), {
+              shouldDirty: false,
+              shouldValidate: true,
+            });
             // eslint-disable-next-line react-hooks/exhaustive-deps
           }, [gross]);
 
@@ -306,7 +336,11 @@ export function ConfirmEnrollmentForm(props: {
                 label="Section"
                 required={hasSections}
                 placeholder={
-                  !classId ? "Select class first" : hasSections ? "Select section" : "No sections for this class"
+                  !classId
+                    ? "Select class first"
+                    : hasSections
+                    ? "Select section"
+                    : "No sections for this class"
                 }
                 options={sectionOptions}
                 disabled={!classId || sectionsQuery.isLoading || !hasSections}
@@ -316,13 +350,19 @@ export function ConfirmEnrollmentForm(props: {
                 <div className="text-xs text-muted-foreground">
                   {batchDetail ? (
                     <div className="space-y-1">
-                      <div className="font-medium text-foreground">Fee estimation until batch end</div>
+                      <div className="font-medium text-foreground">
+                        Fee estimation until batch end
+                      </div>
                       <div className="flex flex-wrap gap-2">
                         <div>
-                          End (AD): <span className="font-medium">{formatDateShort(batchDetail.end_date_ad)}</span>
+                          End (AD):{" "}
+                          <span className="font-medium">
+                            {formatDateShort(batchDetail.end_date_ad)}
+                          </span>
                         </div>
                         <div>
-                          End (BS): <span className="font-medium">{batchDetail.end_date_bs}</span>
+                          End (BS):{" "}
+                          <span className="font-medium">{batchDetail.end_date_bs}</span>
                         </div>
                       </div>
                     </div>
@@ -343,7 +383,9 @@ export function ConfirmEnrollmentForm(props: {
                 {applicableFeesQuery.isError ? (
                   <div className="text-sm text-destructive">Failed to load applicable fees.</div>
                 ) : !batchId || !classId ? (
-                  <div className="text-sm text-muted-foreground">Select batch and class first.</div>
+                  <div className="text-sm text-muted-foreground">
+                    Select batch and class first.
+                  </div>
                 ) : feeRows.length ? (
                   <FeeItemsList
                     feeRows={feeRows as ApplicableFeeStructure[]}
@@ -353,7 +395,10 @@ export function ConfirmEnrollmentForm(props: {
                       const next = checked
                         ? Array.from(new Set([...selectedFees, id]))
                         : selectedFees.filter((x) => x !== id);
-                      setValue("fee_structures", next, { shouldDirty: true, shouldValidate: true });
+                      setValue("fee_structures", next, {
+                        shouldDirty: true,
+                        shouldValidate: true,
+                      });
                     }}
                     batchEndAd={currentBatchEndAd}
                     currencySymbol={currencySymbol}

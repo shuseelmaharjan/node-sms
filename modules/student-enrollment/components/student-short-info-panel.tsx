@@ -178,6 +178,7 @@ export function StudentShortInfoPanel(props: { student: StudentShortInfo }) {
                           is_temporary: f.is_temporary,
                           meta: f.meta,
                           uploaded_at: f.uploaded_at,
+                          document_type: d.document_type,
                         }}
                         thumbSize={52}
                       />

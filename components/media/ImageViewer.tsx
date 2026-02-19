@@ -29,12 +29,14 @@ import {
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
 import { formatDateShort } from "@/lib/text-utils";
+import { toSentenceCase } from "@/utils/text-utils";
 
 export type UploadedImageInfo = {
   id: string;
   file_url: string | null;
   download_url?: string | null;
   file_type?: string;
+  document_type?: string;
   original_name?: string;
   size_bytes?: number;
   is_temporary?: boolean;
@@ -205,7 +207,7 @@ export function ImageViewer({
     }
   };
 
-  const dialogTitle = title ?? safeName(file.original_name);
+  const dialogTitle = title ?? safeName(file.document_type?.split("/")[0] ?? "Image");
 
   const transform = `translate3d(${tx}px, ${ty}px, 0) rotate(${rotation}deg) scale(${scale})`;
 
@@ -242,17 +244,18 @@ export function ImageViewer({
       <DialogContent className="sm:max-w-[720px] p-0 overflow-hidden">
         <DialogHeader className="px-4 pt-4">
           <div className="flex items-start justify-between gap-3">
-            <DialogTitle className="truncate pr-2">{dialogTitle}</DialogTitle>
+            <DialogTitle className="truncate pr-2">{toSentenceCase(dialogTitle)}</DialogTitle>
 
           </div>
         </DialogHeader>
 
         {/* Toolbar */}
         <div className="px-4 pb-3">
-          <div className="flex flex-wrap items-center gap-1.5">
-            <ToolbarIconButton label="Zoom out" onClick={zoomOut} disabled={!canRender}>
-              <ZoomOut className="h-4 w-4" />
-            </ToolbarIconButton>
+          <TooltipProvider>
+            <div className="flex flex-wrap items-center gap-1.5">
+              <ToolbarIconButton label="Zoom out" onClick={zoomOut} disabled={!canRender}>
+                <ZoomOut className="h-4 w-4" />
+              </ToolbarIconButton>
             <ToolbarIconButton label="Zoom in" onClick={zoomIn} disabled={!canRender}>
               <ZoomIn className="h-4 w-4" />
             </ToolbarIconButton>
@@ -293,8 +296,7 @@ export function ImageViewer({
               <Download className="mr-2 h-4 w-4" />
               {downloading ? "Downloading..." : "Download"}
             </Button>
-            {/* Info drawer trigger */}
-            <TooltipProvider>
+              {/* Info drawer trigger */}
               <Tooltip>
                 <Sheet>
                   <SheetTrigger asChild>
@@ -356,8 +358,8 @@ export function ImageViewer({
                   </SheetContent>
                 </Sheet>
               </Tooltip>
-            </TooltipProvider>
-          </div>
+            </div>
+          </TooltipProvider>
 
           {/* <p className="mt-2 text-xs text-muted-foreground">
             Tip: Mouse wheel to zoom • Drag to pan • Double-click to reset • Right-click for menu
@@ -460,24 +462,22 @@ function ToolbarIconButton({
   children: React.ReactNode;
 }) {
   return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            type="button"
-            variant="outline"
-            size="icon"
-            onClick={onClick}
-            disabled={disabled}
-            aria-label={label}
-            title={label}
-          >
-            {children}
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>{label}</TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          onClick={onClick}
+          disabled={disabled}
+          aria-label={label}
+          title={label}
+        >
+          {children}
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent>{label}</TooltipContent>
+    </Tooltip>
   );
 }
 

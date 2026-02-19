@@ -1,3 +1,4 @@
+// confirm-enrollment-page.tsx (unchanged logic, full file)
 "use client";
 
 import * as React from "react";
@@ -72,7 +73,7 @@ export function ConfirmEnrollmentPage({ userId }: { userId: string }) {
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_420px]">
           <StudentShortInfoPanel student={student} />
 
-          <aside className="lg:sticky lg:top-4 h-fit">
+          <aside className="lg:sticky lg:top-20 h-fit">
             <ConfirmEnrollmentForm
               studentId={student.id}
               currencySymbol={currencySymbol}

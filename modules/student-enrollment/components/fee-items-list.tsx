@@ -1,3 +1,4 @@
+// fee-items-list.tsx
 "use client";
 
 import * as React from "react";
@@ -79,6 +80,23 @@ export function periodLabel(period: ApplicableFeeStructure["period"]) {
   }
 }
 
+/** ✅ NEW: One source of truth for tax math */
+function splitTax(lineAmount: number, taxIncluded: boolean, taxRate: number) {
+  if (taxRate <= 0) return { net: lineAmount, tax: 0, payable: lineAmount };
+
+  // If tax is included in the lineAmount (payable), back-calc net and tax inside it
+  if (taxIncluded) {
+    const net = lineAmount / (1 + taxRate);
+    const tax = lineAmount - net;
+    return { net, tax, payable: lineAmount };
+  }
+
+  // If tax is excluded, lineAmount is net, tax must be added on top
+  const net = lineAmount;
+  const tax = net * taxRate;
+  return { net, tax, payable: net + tax };
+}
+
 /* ---- component ---- */
 
 export function FeeItemsList(props: {
@@ -90,7 +108,8 @@ export function FeeItemsList(props: {
   currencySymbol: string; // e.g. "NPR."
   taxRate: number; // e.g. 0.13 (13%)
 }) {
-  const { feeRows, selectedIds, onToggle, batchEndAd, currencySymbol, taxRate } = props;
+  const { feeRows, selectedIds, onToggle, batchEndAd, currencySymbol, taxRate } =
+    props;
 
   const formatCurrency = React.useCallback(
     (amount: number | string) => {
@@ -99,11 +118,6 @@ export function FeeItemsList(props: {
     },
     [currencySymbol]
   );
-
-  function calculateNetAmount(grossAmount: number, taxIncluded: boolean): number {
-    if (!taxIncluded || taxRate === 0) return grossAmount;
-    return grossAmount / (1 + taxRate);
-  }
 
   return (
     <div className="space-y-2">
@@ -114,8 +128,9 @@ export function FeeItemsList(props: {
         const base = Number(f.amount || 0);
         const lineAmount = base * mult;
 
-        const netAmount = calculateNetAmount(lineAmount, (f as any).tax_included ?? false);
-        const taxAmount = lineAmount - netAmount;
+        const taxIncluded = (f as any).tax_included ?? false;
+
+        const { net, tax, payable } = splitTax(lineAmount, taxIncluded, taxRate);
 
         return (
           <div
@@ -136,10 +151,14 @@ export function FeeItemsList(props: {
                 <div className="text-xs text-muted-foreground">
                   {periodLabel(f.period)}
                   {mult > 1 ? ` • × ${mult}` : ""}
+                  {taxRate > 0 ? (
+                    taxIncluded ? " • tax included" : " • tax excluded"
+                  ) : null}
                 </div>
 
+                {/* ✅ show what student pays (final payable) */}
                 <div className="text-sm font-semibold text-foreground mt-1">
-                  {formatCurrency(netAmount)}
+                  {formatCurrency(payable)}
                 </div>
               </div>
             </div>
@@ -148,8 +167,9 @@ export function FeeItemsList(props: {
               fee={f}
               multiplier={mult}
               lineAmount={lineAmount}
-              netAmount={netAmount}
-              taxAmount={taxAmount}
+              netAmount={net}
+              taxAmount={tax}
+              payableAmount={payable}
               formatCurrency={formatCurrency}
               taxRate={taxRate}
             />
@@ -164,17 +184,36 @@ function FeeDetailDrawer(props: {
   fee: ApplicableFeeStructure;
   multiplier: number;
   lineAmount: number;
+
   netAmount: number;
   taxAmount: number;
+  payableAmount: number;
+
   formatCurrency: (n: number | string) => string;
   taxRate: number;
 }) {
-  const { fee, multiplier, lineAmount, netAmount, taxAmount, formatCurrency, taxRate } = props;
+  const {
+    fee,
+    multiplier,
+    lineAmount,
+    netAmount,
+    taxAmount,
+    payableAmount,
+    formatCurrency,
+    taxRate,
+  } = props;
+
+  const taxIncluded = (fee as any).tax_included && taxRate > 0;
 
   return (
     <Drawer>
       <DrawerTrigger asChild>
-        <Button variant="ghost" size="sm" className="h-8 w-8 p-0" title="View fee details">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-8 w-8 p-0"
+          title="View fee details"
+        >
           <InfoIcon className="h-4 w-4" />
         </Button>
       </DrawerTrigger>
@@ -190,9 +229,10 @@ function FeeDetailDrawer(props: {
               <div className="text-xs text-muted-foreground">Fee</div>
               <div className="text-base font-semibold">
                 {fee.fee_head_detail?.name ?? "Fee"}{" "}
-                {(fee as any).tax_included && taxRate > 0 ? (
+                {taxRate > 0 ? (
                   <span className="text-xs text-muted-foreground">
-                    (includes {(taxRate * 100).toFixed(0)}% tax)
+                    ({taxIncluded ? "includes" : "excludes"}{" "}
+                    {(taxRate * 100).toFixed(0)}% tax)
                   </span>
                 ) : null}
               </div>
@@ -216,7 +256,9 @@ function FeeDetailDrawer(props: {
 
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Base amount</span>
-                <span className="font-medium">{formatCurrency(Number(fee.amount || 0))}</span>
+                <span className="font-medium">
+                  {formatCurrency(Number(fee.amount || 0))}
+                </span>
               </div>
 
               <div className="flex justify-between text-sm">
@@ -224,24 +266,41 @@ function FeeDetailDrawer(props: {
                 <span className="font-medium">× {multiplier}</span>
               </div>
 
+              {/* Note: lineAmount is base * multiplier (net if excluded, payable if included) */}
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Line total</span>
                 <span className="font-medium">{formatCurrency(lineAmount)}</span>
               </div>
 
-              {taxAmount > 0 ? (
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">
-                    Tax ({(taxRate * 100).toFixed(0)}%)
-                  </span>
-                  <span className="font-medium">{formatCurrency(taxAmount)}</span>
-                </div>
-              ) : null}
+              {taxRate > 0 ? (
+                <>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Net</span>
+                    <span className="font-medium">{formatCurrency(netAmount)}</span>
+                  </div>
 
-              <div className="border-t pt-2 flex justify-between">
-                <span className="font-semibold">Net (enrollment)</span>
-                <span className="font-semibold">{formatCurrency(netAmount)}</span>
-              </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">
+                      Tax ({(taxRate * 100).toFixed(0)}%)
+                    </span>
+                    <span className="font-medium">{formatCurrency(taxAmount)}</span>
+                  </div>
+
+                  <div className="border-t pt-2 flex justify-between">
+                    <span className="font-semibold">Payable (final)</span>
+                    <span className="font-semibold">
+                      {formatCurrency(payableAmount)}
+                    </span>
+                  </div>
+                </>
+              ) : (
+                <div className="border-t pt-2 flex justify-between">
+                  <span className="font-semibold">Payable (final)</span>
+                  <span className="font-semibold">
+                    {formatCurrency(payableAmount)}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
 
