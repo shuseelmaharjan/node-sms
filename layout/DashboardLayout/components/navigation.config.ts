@@ -13,6 +13,7 @@ import {
   UserCheck2,
   HandCoins,
   BriefcaseBusiness,
+  Globe2,
 } from "lucide-react";
 
 import type { UserRole } from "@/router/routes";
@@ -104,7 +105,7 @@ export const navconfig: NavItem[] = [
     roles: ["superadmin"],
     exactMatch: true,
   },
-  
+
   // Fee Management : Permission admin and principal
   {
     label: "Fee Management",
@@ -125,8 +126,8 @@ export const navconfig: NavItem[] = [
     icon: Users,
     roles: ["admin", "principal", "superadmin"],
     children: [
-      { label: "Student Enrollment", href: "/student-enrollment", roles:["admin", "principal"] },
-      { label: "Staff Enrollment", href: "/staff-enrollment", roles:["admin", "principal"] },
+      { label: "Student Enrollment", href: "/student-enrollment", roles: ["admin", "principal"] },
+      { label: "Staff Enrollment", href: "/staff-enrollment", roles: ["admin", "principal"] },
       { label: "Teacher Positions", href: "/position-levels", roles: ["superadmin"] },
     ],
   },
@@ -136,6 +137,26 @@ export const navconfig: NavItem[] = [
     href: "/subjects",
     roles: ["superadmin"],
     exactMatch: true,
+  },
+  {
+    label: "Website Management",
+    icon: Globe2,
+    roles: ["principal", "admin"],
+    children: [
+      { label: "Navigation", href: "/website/navigation", roles: ["principal", "admin"] },
+      { label: "Courses", href: "/website/courses", roles: ["principal", "admin"] },
+      { label: "Home Page", href: "/website/home-page", roles: ["principal", "admin"] },
+      { label: "Principal Message", href: "/website/principal-message", roles: ["principal", "admin"] },
+      { label: "Gallery", href: "/website/gallery", roles: ["principal", "admin"] },
+      { label: "Icons", href: "/website/icons", roles: ["principal", "admin"] },
+      { label: "Ads", href: "/website/ads", roles: ["principal", "admin"] },
+      { label: "Testimonials", href: "/website/testimonials", roles: ["principal", "admin"] },
+      { label: "Careers", href: "/website/careers", roles: ["principal", "admin"] },
+      { label: "Footer", href: "/website/footer", roles: ["principal", "admin"] },
+      { label: "About Us", href: "/website/about-us", roles: ["principal", "admin"] },
+      { label: "Events", href: "/website/events", roles: ["principal", "admin"] },
+      { label: "Blogs", href: "/website/blog", roles: ["principal", "admin"] },
+    ],
   },
 
   // Roles & Permissions: superadmin only
