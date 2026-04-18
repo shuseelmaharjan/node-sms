@@ -143,8 +143,8 @@ export const navconfig: NavItem[] = [
     icon: Globe2,
     roles: ["principal", "admin"],
     children: [
-      { label: "Navigation", href: "/website/navigation", roles: ["principal", "admin"] },
-      { label: "Courses", href: "/website/courses", roles: ["principal", "admin"] },
+      { label: "Navigation", href: "/website/manage-navigation", roles: ["principal", "admin"] },
+      { label: "Courses", href: "/website/manage-courses", roles: ["principal", "admin"] },
       { label: "Home Page", href: "/website/home-page", roles: ["principal", "admin"] },
       { label: "Principal Message", href: "/website/principal-message", roles: ["principal", "admin"] },
       { label: "Gallery", href: "/website/gallery", roles: ["principal", "admin"] },

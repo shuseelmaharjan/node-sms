@@ -128,7 +128,7 @@ export function FormWizard<S extends Schema>({
           </div>
 
           <div className="flex gap-2">
-            <span className="flex md:hidden">
+            <span className="flex">
               {onCancel && (
                 <Button type="button" variant="outline" onClick={onCancel} disabled={isBlocked}>
                   Cancel
