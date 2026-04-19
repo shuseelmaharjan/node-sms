@@ -1,13 +1,57 @@
 "use client";
 
 import * as React from "react";
+import type { JSONContent } from "@tiptap/react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Pencil, Trash2, ArrowUp, ArrowDown } from "lucide-react";
+
 import {
   RowActionsDropdown,
   type RowActionItem,
 } from "@/components/data-table/RowActionsDropdown";
-import type { CourseEntity } from "../types/course.types";
+
+export type UploadedImageEntity = {
+  id: string;
+  file_url: string;
+  download_url?: string;
+  file_type: string;
+  original_name?: string;
+  size_bytes?: number;
+  is_temporary?: boolean;
+  meta?: any;
+  uploaded_at?: string;
+};
+
+export type CourseEntity = {
+  id: string;
+  serial?: number;
+  name: string;
+  description?: string;
+  navigation_id: string;
+  navigation_name?: string;
+  slug: string;
+  sort_order?: number;
+  image?: UploadedImageEntity | null;
+  banner?: UploadedImageEntity | null;
+  school_id?: string;
+  tags?: string;
+  is_popular?: boolean;
+  created_at?: string;
+  created_by_id?: string;
+  updated_at?: string;
+  updated_by_id?: string;
+};
+
+export type CourseFormEntity = {
+  name: string;
+  description: JSONContent | null;
+  navigation_id: string;
+  slug: string;
+  image_id: string | null;
+  banner_id: string | null;
+  tags: string[];
+  is_popular: boolean;
+};
 
 function Pill(props: {
   children: React.ReactNode;
@@ -53,6 +97,7 @@ export function courseColumns(args: {
       accessorFn: (row) => row.name,
       cell: ({ row }) => {
         const item = row.original;
+
         return (
           <div className="flex min-w-[260px] items-center gap-3">
             <div className="h-12 w-12 overflow-hidden rounded-lg border bg-muted">
@@ -94,21 +139,15 @@ export function courseColumns(args: {
       accessorFn: (row) => row.tags,
       cell: ({ row }) => {
         const tags = row.original.tags?.trim();
-        return (
-          <span className="text-sm text-muted-foreground">
-            {tags || "-"}
-          </span>
-        );
+        return <span className="text-sm text-muted-foreground">{tags || "-"}</span>;
       },
     },
     {
       id: "is_popular",
       header: "Popular",
-      cell: ({ row }) => (
-        <span>{row.original.is_popular ? "Yes" : "No"}</span>
-      ),
+      enableSorting: false,
+      cell: ({ row }) => <span>{row.original.is_popular ? "Yes" : "No"}</span>,
     },
-   
     {
       id: "actions",
       header: "Actions",

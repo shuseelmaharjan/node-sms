@@ -55,7 +55,7 @@ export type StaffEntity = {
 export function staffColumns(args: {
   onEdit: (row: StaffEntity) => void;
   onDelete: (row: StaffEntity) => void;
-  onActivate: (row: StaffEntity) => void;   // 👈 NEW
+  onActivate: (row: StaffEntity) => void;  
 }): ColumnDef<StaffEntity>[] {
   return [
     {

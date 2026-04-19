@@ -38,7 +38,7 @@ export function formatDateShort(input?: string | number | Date | null): string {
   const month = MONTHS_SHORT[d.getMonth()];
   const year = d.getFullYear();
 
-  return `${day} ${month} ${year}`;
+  return `${day} ${month}, ${year}`;
 }
 
 /** Format → 09 Feb 2026, 03:24 PM */

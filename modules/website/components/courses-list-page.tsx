@@ -12,23 +12,46 @@ import type { SortingState } from "@tanstack/react-table";
 import { RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 
+import { api } from "@/api";
+import type { PaginatedResponse } from "@/types/api";
 import { PageShell } from "@/components/layout/PageShell";
 import { DataTable } from "@/components/data-table/DataTable";
 import { ConfirmDeleteDialog } from "@/components/crud/ConfirmDeleteDialog";
 import { AddActionButton, type AddAction } from "@/components/data-table/AddActionButton";
 
-import type { CourseEntity } from "../types/course.types";
-import {
-  deleteCourse,
-  fetchCourses,
-  reorderCourses,
-} from "../api/course.api";
-import { courseColumns } from "../columns/course.columns";
-import { getCourseErrorMessage } from "../lib/course-error";
+import { courseColumns, type CourseEntity } from "../columns/course.columns";
+
+const COURSES_URL = "/api/v1/courses/";
+const COURSE_DETAIL_URL = (id: string) => `/api/v1/courses/${id}/`;
+const COURSE_REORDER_URL = "/api/v1/courses/reorder/";
 
 function toOrdering(s: SortingState) {
   if (!s?.length) return "";
   return s.map((x) => (x.desc ? `-${x.id}` : x.id)).join(",");
+}
+
+function getCourseErrorMessage(error: any, fallback: string): string {
+  const data = error?.response?.data;
+
+  const clean = (msg: unknown) => {
+    const s = String(msg ?? "").trim();
+    return s.startsWith("__all__:") ? s.replace(/^__all__:\s*/, "") : s;
+  };
+
+  if (data?.detail) return clean(data.detail);
+
+  if (Array.isArray(data?.__all__) && data.__all__[0]) {
+    return clean(data.__all__[0]);
+  }
+
+  if (data && typeof data === "object") {
+    for (const [, value] of Object.entries(data)) {
+      if (Array.isArray(value) && value[0]) return clean(value[0]);
+      if (typeof value === "string") return clean(value);
+    }
+  }
+
+  return fallback;
 }
 
 export function CoursesListPage() {
@@ -43,21 +66,34 @@ export function CoursesListPage() {
 
   const pageSizeInitialized = React.useRef(false);
 
-  const [sorting, setSorting] = React.useState<SortingState>([
-    { id: "name", desc: false },
-  ]);
+  // keep empty by default so initial fetch is:
+  // /api/v1/courses/?page=1&page_size=10
+  const [sorting, setSorting] = React.useState<SortingState>([]);
 
   const ordering = React.useMemo(() => toOrdering(sorting), [sorting]);
 
-  const listQuery = useQuery({
+  const listQuery = useQuery<PaginatedResponse<CourseEntity>>({
     queryKey: ["courses", "list", { pageIndex, pageSize, q, ordering }],
-    queryFn: async () =>
-      fetchCourses({
+    queryFn: async () => {
+      const params: Record<string, any> = {
         page: pageIndex + 1,
         page_size: pageSize,
-        search: q || undefined,
-        ordering: ordering || undefined,
-      }),
+      };
+
+      if (q.trim()) {
+        params.search = q.trim();
+      }
+
+      if (ordering) {
+        params.ordering = ordering;
+      }
+
+      const res = await api.get<PaginatedResponse<CourseEntity>>(COURSES_URL, {
+        params,
+      });
+
+      return res.data;
+    },
     placeholderData: keepPreviousData,
   });
 
@@ -74,7 +110,9 @@ export function CoursesListPage() {
   }, [q, sorting]);
 
   const deleteMutation = useMutation({
-    mutationFn: deleteCourse,
+    mutationFn: async (id: string) => {
+      await api.delete(COURSE_DETAIL_URL(id));
+    },
     onSuccess: async () => {
       toast.success("Course deleted");
       await qc.invalidateQueries({ queryKey: ["courses", "list"] });
@@ -86,8 +124,12 @@ export function CoursesListPage() {
   });
 
   const reorderMutation = useMutation({
-    mutationFn: reorderCourses,
+    mutationFn: async (payload: { ordered_ids: string[] }) => {
+      const res = await api.post(COURSE_REORDER_URL, payload);
+      return res.data;
+    },
     onSuccess: async () => {
+      toast.success("Course order updated");
       await qc.invalidateQueries({ queryKey: ["courses", "list"] });
     },
     onError: async (error: any) => {
@@ -96,7 +138,8 @@ export function CoursesListPage() {
     },
   });
 
-  const blocked = listQuery.isFetching || deleteMutation.isPending || reorderMutation.isPending;
+  const blocked =
+    listQuery.isFetching || deleteMutation.isPending || reorderMutation.isPending;
 
   const pageData = listQuery.data;
   const rows = pageData?.results ?? [];
@@ -115,15 +158,15 @@ export function CoursesListPage() {
   );
 
   const canMoveDown = React.useCallback(
-    (course: CourseEntity) =>
-      (orderMap.get(course.id) ?? -1) < rows.length - 1,
+    (course: CourseEntity) => (orderMap.get(course.id) ?? -1) < rows.length - 1,
     [orderMap, rows.length]
   );
 
   const reorderBySwap = React.useCallback(
     async (course: CourseEntity, direction: "up" | "down") => {
-      if (ordering && ordering !== "sort_order") {
-        toast.error("Reordering is only available when sorted by default order.");
+      // allow reorder only when there is no active sorting
+      if (ordering) {
+        toast.error("Reordering is only available in default list order.");
         return;
       }
 
@@ -138,7 +181,7 @@ export function CoursesListPage() {
 
       qc.setQueryData(
         ["courses", "list", { pageIndex, pageSize, q, ordering }],
-        (old: any) => {
+        (old: PaginatedResponse<CourseEntity> | undefined) => {
           if (!old?.results) return old;
 
           return {
@@ -156,7 +199,7 @@ export function CoursesListPage() {
           ordered_ids: next.map((item) => item.id),
         });
       } catch {
-        // rollback handled via invalidate
+        // handled by invalidate
       }
     },
     [orderMap, ordering, pageIndex, pageSize, q, qc, reorderMutation, rows]
@@ -176,13 +219,21 @@ export function CoursesListPage() {
     [canMoveDown, canMoveUp, reorderBySwap, router]
   );
 
-  const searchable = pageData?.meta?.searchable ?? [];
-  const searchEnabled = searchable.length > 0;
+  const searchable = pageData?.meta?.searchable ?? ["name", "slug", "tags"];
 
   const addAction: AddAction = {
     kind: "link",
     href: "/website/manage-courses/add",
     label: "Add Course",
+  };
+
+  const handleRefresh = async () => {
+    // reset to plain list request
+    setQ("");
+    setSorting([]);
+    setPageIndex(0);
+
+    await qc.invalidateQueries({ queryKey: ["courses", "list"] });
   };
 
   return (
@@ -210,19 +261,19 @@ export function CoursesListPage() {
           }}
           meta={{
             searchable,
-            search_param: pageData?.meta?.search_param,
+            search_param: pageData?.meta?.search_param ?? "search",
           }}
           toolbar={{
             search: {
               value: q,
               onChange: setQ,
-              enabled: searchEnabled,
-              placeholder: "Search",
+              enabled: true,
+              placeholder: "Search courses",
             },
             actions: <AddActionButton add={addAction} />,
           }}
           refresh={{
-            onClick: () => qc.invalidateQueries({ queryKey: ["courses", "list"] }),
+            onClick: handleRefresh,
             disabled: blocked,
             icon: <RefreshCw className="h-4 w-4" />,
             title: "Refresh list",
