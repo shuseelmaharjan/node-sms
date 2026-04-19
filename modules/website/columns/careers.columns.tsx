@@ -7,6 +7,7 @@ import {
   RowActionsDropdown,
   type RowActionItem,
 } from "@/components/data-table/RowActionsDropdown";
+import { formatRelative } from "@/utils/text-utils";
 
 export type CareerEntity = {
   id: string;
@@ -25,6 +26,7 @@ export function careersColumns(args: {
     {
       accessorKey: "serial",
       header: "#",
+      enableSorting: false,
       cell: ({ row }) => (
         <span className="tabular-nums">{row.original.serial ?? "-"}.</span>
       ),
@@ -46,7 +48,7 @@ export function careersColumns(args: {
       header: "Expires",
       cell: ({ row }) => (
         <span className="text-sm text-muted-foreground">
-          {new Date(row.original.expires_at).toLocaleString()}
+          {formatRelative(row.original.expires_at)}
         </span>
       ),
     },

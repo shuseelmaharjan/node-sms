@@ -59,7 +59,11 @@ export function rolesColumns(args: {
       enableSorting: false,
       cell: ({ row }) => {
         const v = Boolean(row.original.is_system);
-        return <Badge variant={v ? "default" : "secondary"}>{v ? "Yes" : "No"}</Badge>;
+        return (
+          <Badge variant={v ? "active" : "inactive"}>
+            {v ? "Yes" : "No"}
+          </Badge>
+        );
       },
     },
 

@@ -117,7 +117,7 @@ export function organizationSchoolsColumns(args: {
       cell: ({ row }) => {
         const active = Boolean(row.original.is_active);
         return (
-          <Badge variant={active ? "default" : "secondary"}>
+          <Badge variant={active ? "active" : "inactive"}>
             {active ? "Active" : "Inactive"}
           </Badge>
         );

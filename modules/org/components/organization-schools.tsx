@@ -474,7 +474,6 @@ export function OrganizationSchoolsCrudPage() {
             emptyText={listQuery.isError ? "Failed to load." : "No schools yet."}
             sorting={sorting}
             onSortingChange={setSorting}
-            
             pagination={{
               pageIndex,
               pageSize,
@@ -490,6 +489,13 @@ export function OrganizationSchoolsCrudPage() {
             }}
             meta={{
               searchable: pageData?.meta?.searchable ?? [],
+            }}
+            refresh={{
+              onClick: () =>
+                qc.invalidateQueries({ queryKey: ["org-schools", "list"] }),
+              disabled: blocked,
+              icon: <RefreshCw className="h-4 w-4" />,
+              title: "Refresh schools",
             }}
           />
         }

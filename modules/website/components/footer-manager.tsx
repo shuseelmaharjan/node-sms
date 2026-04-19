@@ -279,7 +279,7 @@ export function FooterManager() {
                       key={g.id}
                       type="button"
                       className={[
-                        "w-full rounded-xl border p-3 text-left transition",
+                        "w-full rounded-xl border p-3 text-left transition cursor-pointer",
                         active
                           ? "border-primary bg-primary/10"
                           : "hover:border-primary/30 hover:bg-muted/40",

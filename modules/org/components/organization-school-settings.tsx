@@ -523,6 +523,13 @@ export function OrganizationSchoolSettingsCrudPage() {
                         meta={{
                             searchable: pageData?.meta?.searchable ?? [],
                         }}
+                        refresh={{
+                            onClick: () =>
+                                qc.invalidateQueries({ queryKey: ["org-school-settings", "list"] }),
+                            disabled: blocked,
+                            icon: <RefreshCw className="h-4 w-4" />,
+                            title: "Refresh school settings",
+                        }}
                     />
                 }
             />

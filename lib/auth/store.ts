@@ -13,6 +13,7 @@ export type User = {
 };
 
 type AuthState = {
+  isInitialized: any;
   accessToken: string | null; // memory
   user: User | null;          // persisted
   hydrated: boolean;          // storage loaded
@@ -31,6 +32,7 @@ type AuthState = {
 export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
+      isInitialized: false,
       accessToken: null,
       user: null,
 

@@ -11,7 +11,8 @@ export {
 export type { ChangePasswordValues } from "./schema/change-password.schema";
 
 // --- Reset Password ---
-export { ResetPasswordSettings } from "../auth/components/ForgetPassword";
+export { default as ResetPasswordSettings } from "../auth/components/ForgetPassword";
+
 export {
   forgotPasswordSchema,
   verifyOtpSchema,
