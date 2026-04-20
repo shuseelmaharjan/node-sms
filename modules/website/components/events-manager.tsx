@@ -2,11 +2,15 @@
 
 import * as React from "react";
 import { Controller } from "react-hook-form";
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import type { SortingState } from "@tanstack/react-table";
 import { RefreshCw } from "lucide-react";
 import { toast } from "sonner";
-import type { JSONContent } from "@tiptap/react";
 
 import { api } from "@/api";
 import type { PaginatedResponse } from "@/types/api";
@@ -16,7 +20,7 @@ import { AddActionButton } from "@/components/data-table/AddActionButton";
 import { ConfirmDeleteDialog } from "@/components/crud/ConfirmDeleteDialog";
 import { FormWizard } from "@/components/form/FormWizard";
 import { InputField } from "@/components/fields/InputField";
-import { RichTextEditor } from "@/components/fields/RichTextEditor";
+import { TextareaField } from "@/components/fields/TextareaField";
 import { handleFormError } from "@/lib/handleFormError";
 import {
   Dialog,
@@ -37,23 +41,10 @@ import {
 const URL = "/api/v1/events/";
 const DETAIL = (id: string) => `/api/v1/events/${id}/`;
 
-function createEmpty(): JSONContent {
-  return { type: "doc", content: [{ type: "paragraph" }] };
-}
-
-function parse(value?: string | null): JSONContent {
-  if (!value) return createEmpty();
-  try {
-    return JSON.parse(value);
-  } catch {
-    return createEmpty();
-  }
-}
-
 function toPayload(v: EventValues) {
   return {
     title: v.title.trim(),
-    description: JSON.stringify(v.description ?? createEmpty()),
+    description: v.description?.trim() ?? "",
     event_date: v.event_date,
   };
 }
@@ -61,7 +52,7 @@ function toPayload(v: EventValues) {
 function getDefault(entity?: EventEntity | null): EventValues {
   return {
     title: entity?.title ?? "",
-    description: parse(entity?.description),
+    description: entity?.description ?? "",
     event_date: entity?.event_date ?? "",
   };
 }
@@ -107,8 +98,7 @@ export function EventsManager() {
   });
 
   const createMutation = useMutation({
-    mutationFn: async (v: EventValues) =>
-      api.post(URL, toPayload(v)),
+    mutationFn: async (v: EventValues) => api.post(URL, toPayload(v)),
     onSuccess: () => {
       toast.success("Created");
       setDialogOpen(false);
@@ -117,8 +107,7 @@ export function EventsManager() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: async (v: EventValues) =>
-      api.put(DETAIL(selectedId), toPayload(v)),
+    mutationFn: async (v: EventValues) => api.put(DETAIL(selectedId), toPayload(v)),
     onSuccess: () => {
       toast.success("Updated");
       setDialogOpen(false);
@@ -187,6 +176,7 @@ export function EventsManager() {
                   label: "Add Event",
                   onClick: () => {
                     setMode("create");
+                    setSelectedId("");
                     setDialogOpen(true);
                   },
                 }}
@@ -207,9 +197,7 @@ export function EventsManager() {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-4xl">
           <DialogHeader>
-            <DialogTitle>
-              {mode === "create" ? "Add" : "Edit"} Event
-            </DialogTitle>
+            <DialogTitle>{mode === "create" ? "Add" : "Edit"} Event</DialogTitle>
           </DialogHeader>
 
           <FormWizard
@@ -217,8 +205,11 @@ export function EventsManager() {
             defaultValues={defaultValues}
             onSubmit={async (v, m) => {
               try {
-                if (mode === "create") await createMutation.mutateAsync(v);
-                else await updateMutation.mutateAsync(v);
+                if (mode === "create") {
+                  await createMutation.mutateAsync(v);
+                } else {
+                  await updateMutation.mutateAsync(v);
+                }
               } catch (e) {
                 handleFormError(e, { setError: m.setError });
               }
@@ -228,16 +219,20 @@ export function EventsManager() {
                 <InputField
                   label="Title"
                   {...methods.register("title")}
+                  error={methods.formState.errors.title}
                 />
 
                 <Controller
                   control={methods.control}
                   name="description"
-                  render={({ field }) => (
-                    <RichTextEditor
+                  render={({ field, fieldState }) => (
+                    <TextareaField
                       label="Description"
-                      value={field.value}
-                      onChange={field.onChange}
+                      placeholder="Enter description..."
+                      rows={5}
+                      {...field}
+                      value={field.value ?? ""}
+                      error={fieldState.error}
                     />
                   )}
                 />
@@ -246,6 +241,7 @@ export function EventsManager() {
                   label="Event Date"
                   type="datetime-local"
                   {...methods.register("event_date")}
+                  error={methods.formState.errors.event_date}
                 />
               </div>
             )}

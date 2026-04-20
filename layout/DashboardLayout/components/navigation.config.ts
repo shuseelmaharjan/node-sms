@@ -155,7 +155,7 @@ export const navconfig: NavItem[] = [
       { label: "Footer", href: "/website/footer-manager", roles: ["principal", "admin"] },
       { label: "About Us", href: "/website/about-us", roles: ["principal", "admin"] },
       { label: "Events", href: "/website/manage-events", roles: ["principal", "admin"] },
-      { label: "Blogs", href: "/website/manage-blogs", roles: ["principal", "admin"] },
+      // { label: "Blogs", href: "/website/manage-blogs", roles: ["principal", "admin"] },
     ],
   },
 

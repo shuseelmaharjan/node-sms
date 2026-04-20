@@ -7,7 +7,7 @@ const richTextSchema: z.ZodType<JSONContent | null> =
 export const eventSchema = z.object({
   title: z.string().trim().min(1, "Title is required"),
 
-  description: richTextSchema,
+  description: z.string().optional().default(""),
 
   event_date: z.string().min(1, "Event date is required"),
 });
