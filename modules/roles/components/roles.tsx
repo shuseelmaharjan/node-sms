@@ -463,6 +463,11 @@ export function RolesCrudPage() {
                         meta={{
                             searchable: pageData?.meta?.searchable ?? [],
                         }}
+                        refresh={{
+                            onClick: () => listQuery.refetch(),
+                            disabled: listQuery.isLoading,
+                            title: "Refresh roles",
+                        }}
                     />
                 }
             />
