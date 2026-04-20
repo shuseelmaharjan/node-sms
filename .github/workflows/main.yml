@@ -31,7 +31,11 @@ jobs:
           mkdir -p deploy_package/.next
 
           cp -r .next/standalone/* deploy_package/
-          rm -rf deploy_package/node_modules
+
+          # keep standalone runtime deps, but don't deploy them as a real node_modules folder
+          if [ -d "deploy_package/node_modules" ]; then
+            mv deploy_package/node_modules deploy_package/standalone_node_modules
+          fi
 
           cp -r .next/static deploy_package/.next/
 
@@ -63,7 +67,20 @@ jobs:
         run: |
           ssh -p ${{ secrets.CPANEL_PORT }} ${{ secrets.CPANEL_USER }}@${{ secrets.CPANEL_HOST }} "
             cd '${{ secrets.DEPLOY_PATH }}' &&
-            find . -mindepth 1 -maxdepth 1 ! -name deploy.tar.gz -exec rm -rf {} \; &&
+            find . -mindepth 1 -maxdepth 1 ! -name deploy.tar.gz ! -name node_modules -exec rm -rf {} \; &&
             tar -xzf deploy.tar.gz &&
-            rm -f deploy.tar.gz
+            rm -f deploy.tar.gz &&
+
+            if [ -d standalone_node_modules ]; then
+              mkdir -p node_modules &&
+              cp -a standalone_node_modules/. node_modules/ &&
+              rm -rf standalone_node_modules
+            fi
+
+            echo 'Root files:' &&
+            ls -la &&
+            echo '.next files:' &&
+            ls -la .next || true &&
+            echo 'node_modules check:' &&
+            ls -la node_modules | head
           "
