@@ -28,22 +28,26 @@ jobs:
       - name: Prepare deployment package
         run: |
           rm -rf deploy_package deploy.tar.gz
-          mkdir -p deploy_package/.next
+          mkdir -p deploy_package
 
-          cp -r .next/standalone/* deploy_package/
+          # Copy standalone output INCLUDING hidden .next directory
+          cp -a .next/standalone/. deploy_package/
 
+          # Keep standalone runtime deps, but not as the original folder during upload
           if [ -d "deploy_package/node_modules" ]; then
             mv deploy_package/node_modules deploy_package/standalone_node_modules
           fi
 
-          cp -r .next/static deploy_package/.next/
+          # Merge static assets into the copied .next directory
+          mkdir -p deploy_package/.next
+          cp -a .next/static deploy_package/.next/
 
           if [ -d "./public" ]; then
-            cp -r public deploy_package/
+            cp -a public deploy_package/
           fi
 
           echo "Deploy package contents:"
-          find deploy_package -maxdepth 3 | sort
+          find deploy_package -maxdepth 4 | sort
 
           tar -czf deploy.tar.gz -C deploy_package .
 
@@ -89,9 +93,9 @@ jobs:
             echo 'Root files:' &&
             ls -la &&
             echo '.next files:' &&
-            ls -la .next || true &&
-            echo '.next/static files:' &&
-            ls -la .next/static || true &&
-            echo 'node_modules check:' &&
-            ls -la node_modules | head || true
+            ls -la .next &&
+            echo '.next/server:' &&
+            ls -la .next/server || true &&
+            echo '.next/static:' &&
+            ls -la .next/static || true
           "
