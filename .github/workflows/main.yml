@@ -22,7 +22,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build static export
+      - name: Build Next.js standalone
         run: npm run build
 
       - name: Setup SSH
@@ -36,7 +36,14 @@ jobs:
         run: |
           ssh -p ${{ secrets.CPANEL_PORT }} ${{ secrets.CPANEL_USER }}@${{ secrets.CPANEL_HOST }} "mkdir -p '${{ secrets.DEPLOY_PATH }}'"
 
-      - name: Deploy build output
+      - name: Deploy standalone build output
         run: |
-          rsync -avz --delete -e "ssh -p ${{ secrets.CPANEL_PORT }}" ./out/ \
-          ${{ secrets.CPANEL_USER }}@${{ secrets.CPANEL_HOST }}:${{ secrets.DEPLOY_PATH }}
+          ssh -p ${{ secrets.CPANEL_PORT }} ${{ secrets.CPANEL_USER }}@${{ secrets.CPANEL_HOST }} "rm -rf '${{ secrets.DEPLOY_PATH }}/.next' '${{ secrets.DEPLOY_PATH }}/public'"
+          rsync -avz -e "ssh -p ${{ secrets.CPANEL_PORT }}" ./.next/standalone/ \
+            ${{ secrets.CPANEL_USER }}@${{ secrets.CPANEL_HOST }}:${{ secrets.DEPLOY_PATH }}/
+          rsync -avz -e "ssh -p ${{ secrets.CPANEL_PORT }}" ./.next/static/ \
+            ${{ secrets.CPANEL_USER }}@${{ secrets.CPANEL_HOST }}:${{ secrets.DEPLOY_PATH }}/.next/static/
+          if [ -d "./public" ]; then
+            rsync -avz -e "ssh -p ${{ secrets.CPANEL_PORT }}" ./public/ \
+              ${{ secrets.CPANEL_USER }}@${{ secrets.CPANEL_HOST }}:${{ secrets.DEPLOY_PATH }}/public/
+          fi
