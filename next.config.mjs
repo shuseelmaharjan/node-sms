@@ -1,10 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: "standalone",
+  // output: "export",
 
   transpilePackages: ["react-nepali-datetime-picker"],
 
   images: {
+    unoptimized: true,
     remotePatterns: [
       {
         protocol: "http",
