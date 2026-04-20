@@ -31,6 +31,8 @@ jobs:
           mkdir -p deploy_package/.next
 
           cp -r .next/standalone/* deploy_package/
+          rm -rf deploy_package/node_modules
+
           cp -r .next/static deploy_package/.next/
 
           if [ -d "./public" ]; then
