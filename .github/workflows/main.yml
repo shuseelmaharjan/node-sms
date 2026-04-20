@@ -63,11 +63,16 @@ jobs:
           scp -P ${{ secrets.CPANEL_PORT }} deploy.tar.gz \
             ${{ secrets.CPANEL_USER }}@${{ secrets.CPANEL_HOST }}:${{ secrets.DEPLOY_PATH }}/deploy.tar.gz
 
-      - name: Extract deployment package on server
+            - name: Extract deployment package on server
         run: |
           ssh -p ${{ secrets.CPANEL_PORT }} ${{ secrets.CPANEL_USER }}@${{ secrets.CPANEL_HOST }} "
             cd '${{ secrets.DEPLOY_PATH }}' &&
-            find . -mindepth 1 -maxdepth 1 ! -name deploy.tar.gz ! -name node_modules -exec rm -rf {} \; &&
+            find . -mindepth 1 -maxdepth 1 \
+              ! -name deploy.tar.gz \
+              ! -name node_modules \
+              ! -name .htaccess \
+              ! -name tmp \
+              -exec rm -rf {} \; &&
             tar -xzf deploy.tar.gz &&
             rm -f deploy.tar.gz &&
 
@@ -78,9 +83,5 @@ jobs:
             fi
 
             echo 'Root files:' &&
-            ls -la &&
-            echo '.next files:' &&
-            ls -la .next || true &&
-            echo 'node_modules check:' &&
-            ls -la node_modules | head
+            ls -la
           "
