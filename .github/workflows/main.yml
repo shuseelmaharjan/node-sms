@@ -32,7 +32,6 @@ jobs:
 
           cp -r .next/standalone/* deploy_package/
 
-          # keep standalone runtime deps, but don't deploy them as a real node_modules folder
           if [ -d "deploy_package/node_modules" ]; then
             mv deploy_package/node_modules deploy_package/standalone_node_modules
           fi
@@ -42,6 +41,9 @@ jobs:
           if [ -d "./public" ]; then
             cp -r public deploy_package/
           fi
+
+          echo "Deploy package contents:"
+          find deploy_package -maxdepth 3 | sort
 
           tar -czf deploy.tar.gz -C deploy_package .
 
@@ -63,16 +65,18 @@ jobs:
           scp -P ${{ secrets.CPANEL_PORT }} deploy.tar.gz \
             ${{ secrets.CPANEL_USER }}@${{ secrets.CPANEL_HOST }}:${{ secrets.DEPLOY_PATH }}/deploy.tar.gz
 
-            - name: Extract deployment package on server
+      - name: Extract deployment package on server
         run: |
           ssh -p ${{ secrets.CPANEL_PORT }} ${{ secrets.CPANEL_USER }}@${{ secrets.CPANEL_HOST }} "
             cd '${{ secrets.DEPLOY_PATH }}' &&
+
             find . -mindepth 1 -maxdepth 1 \
               ! -name deploy.tar.gz \
               ! -name node_modules \
               ! -name .htaccess \
               ! -name tmp \
               -exec rm -rf {} \; &&
+
             tar -xzf deploy.tar.gz &&
             rm -f deploy.tar.gz &&
 
@@ -80,8 +84,14 @@ jobs:
               mkdir -p node_modules &&
               cp -a standalone_node_modules/. node_modules/ &&
               rm -rf standalone_node_modules
-            fi
+            fi &&
 
             echo 'Root files:' &&
-            ls -la
+            ls -la &&
+            echo '.next files:' &&
+            ls -la .next || true &&
+            echo '.next/static files:' &&
+            ls -la .next/static || true &&
+            echo 'node_modules check:' &&
+            ls -la node_modules | head || true
           "
