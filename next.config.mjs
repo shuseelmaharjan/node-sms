@@ -1,23 +1,23 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // output: "export",
+  output: 'export',
 
-  transpilePackages: ["react-nepali-datetime-picker"],
+  transpilePackages: ['react-nepali-datetime-picker'],
 
   images: {
     unoptimized: true,
     remotePatterns: [
       {
-        protocol: "http",
-        hostname: "localhost",
-        port: "8000",
-        pathname: "/media/**",
+        protocol: 'http',
+        hostname: 'localhost',
+        port: '8000',
+        pathname: '/media/**',
       },
       {
-        protocol: "https",
-        hostname: "localhost",
-        port: "8000",
-        pathname: "/media/**",
+        protocol: 'https',
+        hostname: 'localhost',
+        port: '8000',
+        pathname: '/media/**',
       },
       ...(process.env.NEXT_PUBLIC_API_BASE_URL
         ? (() => {
@@ -25,10 +25,10 @@ const nextConfig = {
               const u = new URL(process.env.NEXT_PUBLIC_API_BASE_URL);
               return [
                 {
-                  protocol: u.protocol.replace(":", ""),
+                  protocol: u.protocol.replace(':', ''),
                   hostname: u.hostname,
                   port: u.port || undefined,
-                  pathname: "/media/**",
+                  pathname: '/media/**',
                 },
               ];
             } catch {
@@ -37,9 +37,9 @@ const nextConfig = {
           })()
         : []),
       {
-        protocol: "https",
-        hostname: "res.cloudinary.com",
-        pathname: "/**",
+        protocol: 'https',
+        hostname: 'res.cloudinary.com',
+        pathname: '/**',
       },
     ],
   },
