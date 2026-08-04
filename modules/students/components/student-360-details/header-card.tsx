@@ -29,7 +29,6 @@ import { IdentityEditModal } from "../profile-edit/identity-edit-modal";
 import { ProfilePictureEditModal } from "../profile-edit/profile-picture-edit-modal";
 import { MiniStat } from "./shared";
 import { money } from "./utils";
-import { PayBillModal } from "./pay-bill-modal";
 
 type Props = {
   studentId: string;
@@ -52,7 +51,6 @@ export function Student360HeaderCard({
   avatarUrl,
   latestWallet,
 }: Props) {
-  const [payBillOpen, setPayBillOpen] = React.useState(false);
   const [identityOpen, setIdentityOpen] = React.useState(false);
   const [pictureOpen, setPictureOpen] = React.useState(false);
 
@@ -257,10 +255,10 @@ export function Student360HeaderCard({
                     type="button"
                     size="sm"
                     variant="secondary"
-                    onClick={() => setPayBillOpen(true)}
+                    onClick={() => document.getElementById("student-finance")?.scrollIntoView({ behavior: "smooth", block: "start" })}
                     className="h-8"
                   >
-                    Pay Bill
+                    Record Payment
                   </Button>
                 </div>
 
@@ -306,11 +304,6 @@ export function Student360HeaderCard({
         user={user}
       />
 
-      <PayBillModal
-        open={payBillOpen}
-        onOpenChange={setPayBillOpen}
-        studentId={data.id}
-      />
     </>
   );
 }
