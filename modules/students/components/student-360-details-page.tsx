@@ -15,6 +15,7 @@ import {
 } from "../apis/management-profile.api";
 import type { Student360Detail } from "../types/student360.types";
 import { Student360FinanceSection } from "./student-360-details/finance-section";
+import { StudentFinanceOperations } from "./student-360-details/finance-operations";
 import { Student360FeeStructureIncludes } from "./student-360-details/fee-structure-includes";
 import { Student360HeaderCard } from "./student-360-details/header-card";
 import { Student360ProfileSection } from "./student-360-details/profile-section";
@@ -139,10 +140,12 @@ export function Student360DetailsPage({ id }: { id: string }) {
       title="Student Dashboard"
       description="Profile, academics and finance overview."
       actions={
+        <>
         <Button variant="outline" onClick={() => router.back()}>
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back
         </Button>
+        </>
       }
     >
       {detailQuery.isLoading ? (
@@ -212,7 +215,15 @@ export function Student360DetailsPage({ id }: { id: string }) {
             feeGroup={feeGroup}
           />
 
-          <Student360RecordsSection data={data} />
+          <StudentFinanceOperations
+            studentId={id}
+            enrollment={
+              data.enrollments?.find((item) => item.status === "enrolled") ??
+              data.enrollments?.[0] ??
+              null
+            }
+          />
+
         </div>
       )}
     </PageShell>
