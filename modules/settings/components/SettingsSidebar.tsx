@@ -93,7 +93,7 @@ export function SettingsSidebar({
                       "block leading-snug",
                       compact ? "text-[13px]" : "text-sm",
                       active && "font-medium",
-                      // ✅ allow wrapping instead of truncation
+                      // allow wrapping instead of truncation
                       "whitespace-normal break-words [overflow-wrap:anywhere]"
                     )}
                   >

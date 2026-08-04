@@ -46,6 +46,9 @@ type CrudFormModalProps<S extends z.ZodObject<any, any>, Entity> = {
 
   disableSubmitUntilDirty?: boolean;
 
+  /** Map API errors back into the active form. */
+  onSaveError?: (error: unknown, methods: any) => void;
+
   /**
    * Optional: if you want a different width per usage.
    * Defaults are good for forms like School.
@@ -72,6 +75,7 @@ export function CrudFormModal<S extends z.ZodObject<any, any>, Entity>({
   submitLabelCreate = "Create",
   submitLabelUpdate = "Update",
   disableSubmitUntilDirty = true,
+  onSaveError,
   contentClassName,
 }: CrudFormModalProps<S, Entity>) {
   const queryClient = useQueryClient();
@@ -261,18 +265,21 @@ export function CrudFormModal<S extends z.ZodObject<any, any>, Entity>({
                 className="space-y-2 sm:space-y-4"
                 render={(methods) => renderSections(methods)}
                 onSubmit={async (values, methods) => {
-                  await saveMutation.mutateAsync(values);
-                  // Reset form after successful operation
-                  if (mode === "create") {
-                    // For create operations, reset to clean state
-                    methods.reset(createDefaults, { keepDefaultValues: true });
+                  methods.clearErrors();
+
+                  try {
+                    await saveMutation.mutateAsync(values);
+
+                    // Reset form only after a successful operation.
+                    if (mode === "create") {
+                      methods.reset(createDefaults, { keepDefaultValues: true });
+                    } else {
+                      const currentValues = methods.getValues();
+                      methods.reset(currentValues, { keepDefaultValues: false });
+                    }
                     methods.clearErrors();
-                  } else if (mode === "edit") {
-                    // For edit operations, reset form state to mark as clean
-                    // This clears the "dirty" state while keeping the current values
-                    const currentValues = methods.getValues();
-                    methods.reset(currentValues, { keepDefaultValues: false });
-                    methods.clearErrors();
+                  } catch (error) {
+                    onSaveError?.(error, methods);
                   }
                 }}
               />

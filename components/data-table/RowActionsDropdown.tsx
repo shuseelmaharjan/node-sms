@@ -100,7 +100,7 @@ export function RowActionsDropdown<T>({
           const href = typeof it.href === "function" ? it.href(row) : it.href;
 
           const content = (
-            <div className="flex w-full items-center justify-between gap-3">
+            <div className="flex w-full items-center justify-between gap-3 cursor-pointer">
               <div className="flex items-center gap-2 min-w-0">
                 {it.icon ? <span className="shrink-0">{it.icon}</span> : null}
                 <span className="truncate">{it.label}</span>

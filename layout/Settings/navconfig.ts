@@ -26,15 +26,15 @@ export const settingsNavConfig: NavItem[] = [
     icon: KeyRound,
     exactMatch: true,
   },
-  {
-    label: "Users",
-    href: "/settings/users",
-    icon: Users,
-  },
-  {
-    label: "Roles & Permissions",
-    href: "/settings/roles",
-    icon: ShieldCheck,
-  },
+  // {
+  //   label: "Users",
+  //   href: "/settings/users",
+  //   icon: Users,
+  // },
+  // {
+  //   label: "Roles & Permissions",
+  //   href: "/settings/roles",
+  //   icon: ShieldCheck,
+  // },
   
 ];
