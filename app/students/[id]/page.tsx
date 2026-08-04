@@ -1,17 +1,12 @@
 import { Student360DetailsPage } from "@/modules/students/components/student-360-details-page";
 
-export async function generateStaticParams() {
-  return [
-    { id: "1" },
-    { id: "2" },
-    { id: "3" },
-  ];
-}
+type RouteParams = { id: string } | Promise<{ id: string }>;
 
-export default function Student360DetailsRoutePage({
+export default async function Student360DetailsRoutePage({
   params,
 }: {
-  params: { id: string };
+  params: RouteParams;
 }) {
-  return <Student360DetailsPage id={params.id} />;
+  const { id } = await Promise.resolve(params);
+  return <Student360DetailsPage id={id} />;
 }

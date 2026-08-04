@@ -49,7 +49,7 @@ export function student360Columns(): ColumnDef<Student360ListRow>[] {
         return ce ? (
           <Badge variant={normalizeVariant(ce.status)} label={toSentenceCase(ce.status)} />
         ) : (
-          <span className="text-muted-foreground text-sm">-</span>
+          <span className="text-muted-foreground text-sm">Pending</span>
         );
       },
     },
@@ -70,7 +70,8 @@ export function student360Columns(): ColumnDef<Student360ListRow>[] {
       enableSorting: false,
       cell: ({ row }) => (
         <span className="tabular-nums">
-          {row.original.batches_meta?.count ?? 0}
+          {/* {row.original.batches_meta?.count ?? 0} */}
+          {row.original.current_enrollment?.batch_name ? ` ${row.original.current_enrollment.batch_name}` : ""}
         </span>
       ),
     },
