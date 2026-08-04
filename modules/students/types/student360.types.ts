@@ -232,6 +232,10 @@ export type FeeIncludeAuditRow = {
 };
 
 export type Student360Detail = {
+  /** Management user identifier when the API exposes it separately. */
+  user_id?: string;
+  user?: { id?: string } | null;
+
   registration_no: string;
   id: string;
   first_name: string;

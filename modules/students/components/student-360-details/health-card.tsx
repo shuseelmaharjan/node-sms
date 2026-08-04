@@ -2,12 +2,13 @@ import * as React from "react";
 
 import { Badge } from "@/components/ui/badge";
 
+import type { ManagedHealth } from "../../types/management-profile.types";
 import type { StudentOtherInfo } from "../../types/student360.types";
 
 export function HealthCard({
   info,
 }: {
-  info: StudentOtherInfo | null | undefined;
+  info: ManagedHealth | StudentOtherInfo | null | undefined;
 }) {
   if (!info) {
     return (
@@ -25,8 +26,16 @@ export function HealthCard({
     ["Chronic illness", info.chronic_illness, info.chronic_illness_details],
     ["Allergies", info.allergies, info.allergy_details],
     ["Medications", info.medications, info.medication_details],
-    ["Dietary restrictions", info.dietary_restrictions, info.dietary_restriction_details],
-    ["Other health issues", info.other_health_issues, info.other_health_issue_details],
+    [
+      "Dietary restrictions",
+      info.dietary_restrictions,
+      info.dietary_restriction_details,
+    ],
+    [
+      "Other health issues",
+      info.other_health_issues,
+      info.other_health_issue_details,
+    ],
   ] as const;
 
   return (
@@ -34,7 +43,7 @@ export function HealthCard({
       {flags.map(([label, on, details]) => (
         <div
           key={label}
-          className="rounded-xl border p-3 bg-gradient-to-br from-muted/40 to-background"
+          className="rounded-xl border bg-gradient-to-br from-muted/40 to-background p-3"
         >
           <div className="flex items-center justify-between">
             <div className="font-medium">{label}</div>

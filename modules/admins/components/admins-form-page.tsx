@@ -664,6 +664,8 @@ export function AdminsFormPage(props: { mode: "create" | "edit" }) {
                   errors={methods.formState.errors}
                   disabled={blocked}
                   baseName={"addresses.0" as any}
+                  fieldsClassName="grid-cols-3 sm:grid-cols-2"
+
                 />
 
                 <NepalAddressFields
@@ -675,6 +677,7 @@ export function AdminsFormPage(props: { mode: "create" | "edit" }) {
                   errors={methods.formState.errors}
                   disabled={blocked}
                   baseName={"addresses.1" as any}
+                  fieldsClassName="grid-cols-3 sm:grid-cols-2"
                 />
               </div>
 

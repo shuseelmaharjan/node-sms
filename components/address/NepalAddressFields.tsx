@@ -114,8 +114,17 @@ type Props<T extends FieldValues> = {
   errors: FieldErrors<T>;
   disabled?: boolean;
   baseName: Path<T>;
-};
 
+  /**
+   * Styles the outer bordered wrapper.
+   */
+  className?: string;
+
+  /**
+   * Overrides or extends the internal address-field grid.
+   */
+  fieldsClassName?: string;
+};
 function getErr(obj: any, path: string): string | undefined {
   const parts = path.split(".");
   let cur = obj;
@@ -135,6 +144,8 @@ export function NepalAddressFields<T extends FieldValues>({
   errors,
   disabled,
   baseName,
+  className,
+  fieldsClassName,
 }: Props<T>) {
   const provincePath = `${baseName}.province` as Path<T>;
   const districtPath = `${baseName}.district` as Path<T>;
@@ -290,8 +301,12 @@ export function NepalAddressFields<T extends FieldValues>({
   const isPrimaryPath = `${baseName}.is_primary` as Path<T>;
 
   return (
-    <div className="rounded-lg border p-3 space-y-3">
-      {/* Hidden fields to preserve data */}
+    <div
+      className={cn(
+        "space-y-3 rounded-lg border p-3",
+        className
+      )}
+    >      {/* Hidden fields to preserve data */}
       <input type="hidden" {...register(idPath as any)} />
       <input type="hidden" {...register(addressTypePath as any)} />
       <input type="hidden" {...register(countryPath as any)} />
@@ -304,8 +319,12 @@ export function NepalAddressFields<T extends FieldValues>({
         <h3 className="font-medium">{title}</h3>
       </div>
 
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-        {/* Province */}
+      <div
+        className={cn(
+          "grid gap-3",
+          fieldsClassName
+        )}
+      >        {/* Province */}
         <Controller
           control={control}
           name={provincePath}
@@ -410,14 +429,14 @@ function FieldSelect(props: {
       <Select value={props.value} onValueChange={props.onValueChange} disabled={props.disabled}>
         <SelectTrigger
           id={id}
-          className={cn("w-full", props.error && "border-destructive focus-visible:ring-destructive/30")}
+          className={cn("cursor-pointer w-full", props.error && "border-destructive focus-visible:ring-destructive/30")}
         >
           <SelectValue placeholder={props.placeholder ?? `Select ${props.label}`} />
         </SelectTrigger>
 
         <SelectContent>
           {props.options.map((o) => (
-            <SelectItem key={o.value} value={o.value}>
+            <SelectItem key={o.value} value={o.value} className="cursor-pointer">
               {o.label}
             </SelectItem>
           ))}

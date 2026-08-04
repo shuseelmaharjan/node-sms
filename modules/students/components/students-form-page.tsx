@@ -676,6 +676,7 @@ export function StudentsFormPage(props: { mode: "create" | "edit" }) {
                   errors={methods.formState.errors}
                   disabled={blocked}
                   baseName={"addresses.0" as any}
+                  fieldsClassName="grid-cols-1 sm:grid-cols-3 md:grid-cols-3"
                 />
 
                 <NepalAddressFields
@@ -687,6 +688,7 @@ export function StudentsFormPage(props: { mode: "create" | "edit" }) {
                   errors={methods.formState.errors}
                   disabled={blocked}
                   baseName={"addresses.1" as any}
+                  fieldsClassName="grid-cols-1 sm:grid-cols-3 md:grid-cols-3"
                 />
               </div>
 

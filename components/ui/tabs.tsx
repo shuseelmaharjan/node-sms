@@ -64,7 +64,7 @@ function TabsTrigger({
       data-slot="tabs-trigger"
       className={cn(
         // ✅ base (square)
-        "relative inline-flex flex-1 items-center justify-center gap-2 px-4 py-2 text-sm font-semibold",
+        "relative inline-flex flex-1 items-center justify-center gap-2 px-4 py-2 text-sm font-semibold cursor-pointer select-none data-[state=active]:cursor-default data-[state=active]:pointer-events-none",
         "text-foreground transition-all duration-200",
         "border-r last:border-r-0 border-border",
         "hover:bg-muted/40",
@@ -114,7 +114,7 @@ function TabsContent({
       data-slot="tabs-content"
       className={cn(
         "flex-1 outline-none",
-        "data-[state=inactive]:hidden data-[state=active]:animate-in data-[state=active]:fade-in-0 data-[state=active]:slide-in-from-top-1",
+        "data-[state=inactive]:hidden data-[state=active]:animate-in data-[state=active]:fade-in-0 data-[state=active]:slide-in-from-top-1 cursor-pointer",
         className
       )}
       {...props}
