@@ -1,4 +1,3 @@
-// components/form/FormWizard.tsx
 "use client";
 
 import React, { useEffect, useMemo } from "react";
@@ -11,9 +10,10 @@ import {
   useForm,
 } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 import { Spinner } from "@/components/ui/spinner";
+import { cn } from "@/lib/utils";
 
 type Schema = z.ZodObject<any, any>;
 type Values<S extends Schema> = z.infer<S> & FieldValues;
@@ -23,34 +23,17 @@ export type FormWizardProps<S extends Schema> = {
   schema: S;
   defaultValues: DefaultValues<Values<S>>;
   render: (methods: WizardMethods<S>) => React.ReactNode;
-
-  onSubmit: (values: Values<S>, methods: WizardMethods<S>) => void | Promise<void>;
-
+  onSubmit: (
+    values: Values<S>,
+    methods: WizardMethods<S>
+  ) => void | Promise<void>;
   submitLabel?: string;
   submitLoading?: boolean;
-
-  /** disables all actions */
   blocked?: boolean;
-
-  /** show cancel button */
   onCancel?: () => void;
-
-  /**
-   * If true, Save button is disabled when form is not dirty.
-   * (Recommended for “settings” forms.)
-   */
   disableSubmitUntilDirty?: boolean;
-
-  /**
-   * Change this to force reset (switching records, reopening modal, etc.)
-   */
   resetKey?: string | number;
-
   className?: string;
-
-  /**
-   * External blockers (image uploading, etc.)
-   */
   externallyBlocked?: boolean;
 };
 
@@ -68,7 +51,6 @@ export function FormWizard<S extends Schema>({
   className,
   externallyBlocked = false,
 }: FormWizardProps<S>) {
-  // Keep defaults stable to avoid RHF reinitializing unexpectedly
   const stableDefaults = useMemo(() => defaultValues, [defaultValues]);
 
   const methods = useForm<Values<S>, any, Values<S>>({
@@ -77,64 +59,53 @@ export function FormWizard<S extends Schema>({
     mode: "onChange",
   });
 
-  // Force reset when resetKey changes (modal open, record changes, etc.)
   useEffect(() => {
     if (resetKey == null) return;
 
     methods.reset(stableDefaults, {
-      keepDefaultValues: false, // ✅ important
+      keepDefaultValues: false,
     });
     methods.clearErrors();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resetKey]);
 
   const handleReset = () => {
-    methods.reset(stableDefaults, { keepDefaultValues: false }); // important
+    methods.reset(stableDefaults, { keepDefaultValues: false });
     methods.clearErrors();
   };
 
-
   const isDirty = methods.formState.isDirty;
   const isValid = methods.formState.isValid;
-
   const isBlocked = blocked || externallyBlocked || submitLoading;
 
   const canSubmit =
-    !isBlocked &&
-    isValid &&
-    (!disableSubmitUntilDirty || isDirty);
-
-  // const handleReset = () => {
-  //   methods.reset(stableDefaults, { keepDefaultValues: true });
-  //   methods.clearErrors();
-  // };
+    !isBlocked && isValid && (!disableSubmitUntilDirty || isDirty);
 
   const submit = methods.handleSubmit((values) => onSubmit(values, methods));
 
   return (
     <FormProvider {...methods}>
       <form onSubmit={submit} className={cn("space-y-6", className)}>
-        {/* Content */}
         <div className="space-y-6">{render(methods)}</div>
 
-        {/* Actions */}
         <div className="flex items-center justify-between gap-3 border-t pt-4">
           <div className="text-xs">
             {isDirty ? (
               <span className="text-warn font-medium">Unsaved changes</span>
-            ) : (
-              <span className="text-muted-foreground"></span>
-            )}
+            ) : null}
           </div>
 
           <div className="flex gap-2">
-            <span className="flex">
-              {onCancel && (
-                <Button type="button" variant="outline" onClick={onCancel} disabled={isBlocked}>
-                  Cancel
-                </Button>
-              )}
-            </span>
+            {onCancel ? (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onCancel}
+                disabled={isBlocked}
+              >
+                Cancel
+              </Button>
+            ) : null}
 
             <Button
               type="button"
@@ -145,12 +116,12 @@ export function FormWizard<S extends Schema>({
               Reset
             </Button>
 
-            <Button type="submit">
+            <Button type="submit" disabled={!canSubmit}>
               {submitLoading ? (
-                <div className="flex items-center gap-2">
+                <span className="flex items-center gap-2">
                   <Spinner />
                   <span className="text-sm">Submitting...</span>
-                </div>
+                </span>
               ) : (
                 submitLabel
               )}

@@ -1,4 +1,5 @@
-"use client";
-export default function DashboardSettingsGeneralPage() {
-  return <div>General Settings Page</div>;
+import { ProfileSettings } from "@/modules/org/components/ProfileSettings";
+
+export default function ProfilePage() {
+  return <ProfileSettings />;
 }

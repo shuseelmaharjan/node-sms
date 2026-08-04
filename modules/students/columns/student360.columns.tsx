@@ -92,7 +92,7 @@ function Student360RowActions({ row }: { row: Student360ListRow }) {
         items={[
           {
             key: "view",
-            label: "View 360°",
+            label: "View Details",
             icon: <Eye className="h-4 w-4" />,
             href: (r) => `/students/${r.id}`,
           },

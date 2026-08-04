@@ -72,8 +72,8 @@ export function Students360Page() {
 
   return (
     <PageShell
-      title="Students 360°"
-      description="Search students and open a complete 360° view (enrollment history + fees + billing + wallets)."
+      title="Students Details"
+      description="Search students (enrollment history + fees + billing + wallets)."
     >
       <DataTable<Student360ListRow>
         data={rows}
