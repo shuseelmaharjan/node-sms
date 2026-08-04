@@ -9,6 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { FormWizard } from "@/components/form/FormWizard";
 import { SelectField } from "@/components/fields/SelectField";
 import { InputField } from "@/components/fields/InputField";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 import {
   confirmEnrollmentSchema,
@@ -104,6 +106,8 @@ export function ConfirmEnrollmentForm(props: {
   currencySymbol: string;
   taxRate: number; // 0.13
 }) {
+  const router = useRouter();
+
   const { studentId, currencySymbol, taxRate } = props;
 
   const [batchId, setBatchId] = React.useState<string>("");
@@ -149,7 +153,24 @@ export function ConfirmEnrollmentForm(props: {
   });
 
   const submitMutation = useMutation({
-    mutationFn: async (payload: any) => (await api.post(SUBMIT_URL, payload)).data,
+    mutationFn: async (payload: any) =>
+      (await api.post(SUBMIT_URL, payload)).data,
+
+    onSuccess: () => {
+      toast.success("Enrollment completed successfully.", {
+        description:
+          "The student has been enrolled and the fee structure has been created.",
+      });
+
+      router.replace("/students");
+    },
+
+    onError: (error: any) => {
+      toast.error(
+        error?.response?.data?.detail ??
+        "Failed to complete student enrollment."
+      );
+    },
   });
 
   const batchOptions =
@@ -216,7 +237,17 @@ export function ConfirmEnrollmentForm(props: {
           };
 
           await submitMutation.mutateAsync(payload);
-          methods.reset(values, { keepDefaultValues: false });
+
+          toast.success("Student enrolled successfully.", {
+            description:
+              "Enrollment has been completed and the fee structure has been configured.",
+          });
+
+          methods.reset(values, {
+            keepDefaultValues: false,
+          });
+
+          router.replace("/students");
         }}
         render={(methods) => {
           const { control, watch, setValue } = methods;
@@ -339,8 +370,8 @@ export function ConfirmEnrollmentForm(props: {
                   !classId
                     ? "Select class first"
                     : hasSections
-                    ? "Select section"
-                    : "No sections for this class"
+                      ? "Select section"
+                      : "No sections for this class"
                 }
                 options={sectionOptions}
                 disabled={!classId || sectionsQuery.isLoading || !hasSections}
