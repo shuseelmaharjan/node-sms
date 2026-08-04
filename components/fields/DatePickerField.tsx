@@ -35,6 +35,38 @@ type ViewMode = "day" | "month" | "year";
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const startOfDecade = (year: number) => Math.floor(year / 10) * 10;
 
+function parseLocalDate(
+  value?: string
+): Date | undefined {
+  if (!value) return undefined;
+
+  const match = value.match(
+    /^(\d{4})-(\d{2})-(\d{2})$/
+  );
+
+  if (!match) return undefined;
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+
+  const date = new Date(
+    year,
+    month - 1,
+    day
+  );
+
+  if (
+    date.getFullYear() !== year ||
+    date.getMonth() !== month - 1 ||
+    date.getDate() !== day
+  ) {
+    return undefined;
+  }
+
+  return date;
+}
+
 function DatePickerInner<T extends FieldValues>(props: {
   id: string;
   label: string;
@@ -50,9 +82,9 @@ function DatePickerInner<T extends FieldValues>(props: {
 
   const hasError = Boolean(fieldState.error);
 
-  const selectedDate = field.value ? new Date(field.value as string) : undefined;
 
   const [view, setView] = React.useState<ViewMode>("day");
+  const selectedDate = parseLocalDate(field.value as string | undefined);
   const [displayMonth, setDisplayMonth] = React.useState<Date>(() => selectedDate ?? new Date());
 
   React.useEffect(() => {
@@ -169,10 +201,15 @@ function DatePickerInner<T extends FieldValues>(props: {
         month={displayMonth}
         onMonthChange={setDisplayMonth}
         selected={selectedDate}
-        onSelect={(date) => field.onChange(date ? format(date, "yyyy-MM-dd") : "")}
+        onSelect={(date) => {
+          field.onChange(
+            date ? format(date, "yyyy-MM-dd") : ""
+          );
+          field.onBlur();
+        }}
         disabled={disabled}
-        initialFocus
-        showOutsideDays={false} 
+        autoFocus
+        showOutsideDays={false}
         hideCaption
         hideNavigation
       />
