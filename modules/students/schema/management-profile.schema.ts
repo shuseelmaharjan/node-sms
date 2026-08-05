@@ -119,33 +119,106 @@ export type DocumentValues = z.infer<
   typeof documentSchema
 >;
 
-export const healthSchema = z.object({
-  is_disabled: z.boolean(),
-  disability_details: optionalText,
 
-  visual_issues: z.boolean(),
-  hearing_issues: z.boolean(),
-  mobility_issues: z.boolean(),
+export const healthSchema = z
+  .object({
+    is_disabled: z.boolean(),
+    disability_details: z.string(),
 
-  chronic_illness: z.boolean(),
-  chronic_illness_details: optionalText,
+    visual_issues: z.boolean(),
+    hearing_issues: z.boolean(),
+    mobility_issues: z.boolean(),
 
-  allergies: z.boolean(),
-  allergy_details: optionalText,
+    chronic_illness: z.boolean(),
+    chronic_illness_details: z.string(),
 
-  medications: z.boolean(),
-  medication_details: optionalText,
+    allergies: z.boolean(),
+    allergy_details: z.string(),
 
-  dietary_restrictions: z.boolean(),
-  dietary_restriction_details: optionalText,
+    medications: z.boolean(),
+    medication_details: z.string(),
 
-  other_health_issues: z.boolean(),
-  other_health_issue_details: optionalText,
-});
+    dietary_restrictions: z.boolean(),
+    dietary_restriction_details: z.string(),
 
-export type HealthValues = z.infer<
-  typeof healthSchema
->;
+    other_health_issues: z.boolean(),
+    other_health_issue_details: z.string(),
+  })
+  .superRefine((values, ctx) => {
+    if (
+      values.is_disabled &&
+      !values.disability_details.trim()
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["disability_details"],
+        message:
+          "Disability details are required when disabled is true.",
+      });
+    }
+
+    if (
+      values.chronic_illness &&
+      !values.chronic_illness_details.trim()
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["chronic_illness_details"],
+        message:
+          "Chronic illness details are required.",
+      });
+    }
+
+    if (
+      values.allergies &&
+      !values.allergy_details.trim()
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["allergy_details"],
+        message:
+          "Allergy details are required.",
+      });
+    }
+
+    if (
+      values.medications &&
+      !values.medication_details.trim()
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["medication_details"],
+        message:
+          "Medication details are required.",
+      });
+    }
+
+    if (
+      values.dietary_restrictions &&
+      !values.dietary_restriction_details.trim()
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["dietary_restriction_details"],
+        message:
+          "Dietary restriction details are required.",
+      });
+    }
+
+    if (
+      values.other_health_issues &&
+      !values.other_health_issue_details.trim()
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["other_health_issue_details"],
+        message:
+          "Other health issue details are required.",
+      });
+    }
+  });
+
+export type HealthValues = z.infer<typeof healthSchema>;
 
 export const addressFieldsSchema = z.object({
   country: z
