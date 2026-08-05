@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import type { ColumnDef } from "@tanstack/react-table";
-import { Eye } from "lucide-react";
+import { Eye, CheckCircle2 } from "lucide-react";
 
 import { RowActionsDropdown } from "@/components/data-table/RowActionsDropdown";
 import { Badge, normalizeVariant } from "@/components/ui/badge";
@@ -84,20 +84,40 @@ export function student360Columns(): ColumnDef<Student360ListRow>[] {
   ];
 }
 
-function Student360RowActions({ row }: { row: Student360ListRow }) {
+
+function Student360RowActions({
+  row,
+}: {
+  row: Student360ListRow;
+}) {
+  const items = [];
+
+  if (!row.current_enrollment) {
+    items.push({
+      key: "complete-enrollment",
+      label: "Complete Enrollment",
+      icon: (
+        <CheckCircle2 className="h-4 w-4" />
+      ),
+      href: (r: Student360ListRow) =>
+        `/student-enrollment/confirm-enrollment?user_id=${r.id}`,
+    });
+  }
+
+  items.push({
+    key: "view",
+    label: "View Details",
+    icon: <Eye className="h-4 w-4" />,
+    href: (r: Student360ListRow) =>
+      `/students/${r.id}`,
+  });
+
   return (
     <div onClick={(e) => e.stopPropagation()}>
       <RowActionsDropdown<Student360ListRow>
         row={row}
         label="Actions"
-        items={[
-          {
-            key: "view",
-            label: "View Details",
-            icon: <Eye className="h-4 w-4" />,
-            href: (r) => `/students/${r.id}`,
-          },
-        ]}
+        items={items}
       />
     </div>
   );
