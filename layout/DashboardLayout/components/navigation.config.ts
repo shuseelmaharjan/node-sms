@@ -122,6 +122,20 @@ export const navconfig: NavItem[] = [
     href: "/operations",
   },
   {
+    label: "Invoices",
+    icon: BarChart3,
+    roles: ["admin", "principal"],
+    exactMatch: true,
+    href: "/invoices",
+  },
+  {
+    label:"Billing",
+    icon: HandCoins,
+    roles: ["admin", "principal"],
+    exactMatch: true,
+    href: "/billing",
+  },
+  {
     label: "Enrollments",
     icon: Users,
     roles: ["admin", "principal", "superadmin"],
